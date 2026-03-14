@@ -255,17 +255,31 @@
     document.getElementById("rem-label").textContent = mode === "Kind" ? "Remarks (Item, Qty) *" : "Remarks";
   };
 
+  window._acMatches = [];
   window.searchDonor = (val) => {
     const ac = document.getElementById("donor-ac");
     if (val.length < 2) { ac.classList.add("hidden"); return; }
-    const matches = donors.filter(d=>(d.name||"").toLowerCase().includes(val.toLowerCase())).slice(0,6);
-    if (!matches.length) { ac.classList.add("hidden"); return; }
-    ac.innerHTML = matches.map(d=>`
-      <div class="autocomplete-item" onclick="selectDonor(${JSON.stringify({id:d.id,name:d.name,department:d.department||'',team:d.team||'',defaultAmount:d.defaultAmount||0}).replace(/'/g,'&#39;')})">
+    window._acMatches = donors.filter(d=>(d.name||"").toLowerCase().includes(val.toLowerCase())).slice(0,6);
+    if (!window._acMatches.length) { ac.classList.add("hidden"); return; }
+    ac.innerHTML = window._acMatches.map((d,i)=>`
+      <div class="autocomplete-item" onclick="selectDonor(${i})">
         <div class="ac-name">${d.name}</div>
         <div class="ac-sub">${d.department||""} · ${d.team||""}</div>
       </div>`).join("");
     ac.classList.remove("hidden");
+  };
+
+  window.selectDonor = (i) => {
+    const d = window._acMatches[i];
+    if (!d) return;
+    document.getElementById("f-donor").value = d.name;
+    document.getElementById("f-donor").dataset.id = d.id;
+    if (d.department) {
+      document.getElementById("f-dep").value = d.department;
+      document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
+    }
+    if (d.defaultAmount) document.getElementById("f-amount").value = d.defaultAmount;
+    document.getElementById("donor-ac").classList.add("hidden");
   };
 
   window.selectDonor = (d) => {
