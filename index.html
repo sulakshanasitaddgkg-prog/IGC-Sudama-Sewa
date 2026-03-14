@@ -6,163 +6,161 @@
   <title>IGC Sudama Sewa — Login</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    body {
-      display:flex; align-items:center; justify-content:center;
-      min-height:100vh; padding:20px; position:relative; overflow:hidden;
-      background-image:
-        radial-gradient(ellipse at 30% 40%,rgba(255,107,0,.07) 0%,transparent 60%),
-        radial-gradient(ellipse at 70% 70%,rgba(212,160,23,.05) 0%,transparent 60%);
-    }
-    .om-bg {
-      position:fixed; font-size:420px; opacity:.02; color:var(--gold);
-      top:50%; left:50%; transform:translate(-50%,-50%);
-      pointer-events:none; user-select:none; z-index:0;
-    }
-    .login-wrap { width:100%; max-width:410px; position:relative; z-index:1; }
-    .logo-area  { text-align:center; margin-bottom:36px; }
-    .logo-circle {
-      width:76px; height:76px;
-      background:linear-gradient(135deg,var(--saffron),var(--gold));
-      border-radius:50%; display:flex; align-items:center; justify-content:center;
-      font-size:38px; margin:0 auto 14px;
-      box-shadow:0 0 40px rgba(255,107,0,.4);
-    }
-    .logo-area h1 { font-size:20px; color:var(--gold); letter-spacing:1px; }
-    .logo-area p  { font-size:13px; color:var(--text-muted); margin-top:4px; }
-    .tab-switch {
-      display:flex; background:var(--bg-card2); border-radius:8px; padding:4px; margin-bottom:24px;
-    }
-    .tab-btn {
-      flex:1; padding:8px; background:transparent; color:var(--text-muted);
-      border:none; border-radius:6px; cursor:pointer;
-      font-family:'Mukta',sans-serif; font-size:14px; font-weight:600; transition:all .2s;
-    }
-    .tab-btn.active { background:var(--saffron); color:#fff; }
-    .login-footer { text-align:center; margin-top:20px; font-size:12px; color:var(--text-muted); }
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;
+      background-image:radial-gradient(ellipse at 30% 40%,rgba(255,107,0,.07) 0%,transparent 60%),
+      radial-gradient(ellipse at 70% 70%,rgba(212,160,23,.05) 0%,transparent 60%);}
+    .om-bg{position:fixed;font-size:400px;opacity:.02;color:var(--gold);top:50%;left:50%;
+      transform:translate(-50%,-50%);pointer-events:none;user-select:none;z-index:0;}
+    .login-wrap{width:100%;max-width:400px;position:relative;z-index:1;}
+    .logo-area{text-align:center;margin-bottom:32px;}
+    .logo-circle{width:72px;height:72px;background:linear-gradient(135deg,var(--saffron),var(--gold));
+      border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;
+      margin:0 auto 12px;box-shadow:0 0 40px rgba(255,107,0,.4);}
+    .logo-area h1{font-size:20px;color:var(--gold);letter-spacing:1px;}
+    .logo-area p{font-size:13px;color:var(--text-muted);margin-top:4px;}
+    .tab-switch{display:flex;background:var(--bg-card2);border-radius:8px;padding:4px;margin-bottom:22px;}
+    .tab-btn2{flex:1;padding:8px;background:transparent;color:var(--text-muted);border:none;
+      border-radius:6px;cursor:pointer;font-family:'Mukta',sans-serif;font-size:14px;font-weight:600;transition:all .2s;}
+    .tab-btn2.active{background:var(--saffron);color:#fff;}
   </style>
 </head>
 <body>
-  <div class="om-bg">ॐ</div>
+<div class="om-bg">ॐ</div>
+<div id="toast-container"></div>
 
-  <div class="login-wrap">
-    <div class="logo-area">
-      <div class="logo-circle">🪷</div>
-      <h1>IGC Sudama Sewa</h1>
-      <p>Devotee Donation &amp; Team Performance Tracker</p>
-    </div>
-
-    <div class="card" style="border-color:var(--border-strong);padding:28px;">
-      <div class="tab-switch">
-        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-        <button class="tab-btn"        id="tab-signup" onclick="switchTab('signup')">Create Account</button>
-      </div>
-
-      <!-- Login Form -->
-      <div id="form-login">
-        <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input class="form-input" type="email" id="login-email" placeholder="your@email.com"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" type="password" id="login-pass" placeholder="••••••••"/>
-        </div>
-        <button class="btn btn-primary btn-lg btn-block mt-2" id="login-btn" onclick="doLogin()">
-          🙏 Sign In
-        </button>
-        <p class="text-center text-muted text-sm mt-2">Contact Super Admin for account access</p>
-      </div>
-
-      <!-- Signup Form -->
-      <div id="form-signup" class="hidden">
-        <div class="form-group">
-          <label class="form-label">Full Name</label>
-          <input class="form-input" type="text" id="su-name" placeholder="Your full name"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input class="form-input" type="email" id="su-email" placeholder="your@email.com"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" type="password" id="su-pass" placeholder="Min 6 characters"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Confirm Password</label>
-          <input class="form-input" type="password" id="su-pass2" placeholder="Repeat password"/>
-        </div>
-        <button class="btn btn-primary btn-lg btn-block mt-2" id="signup-btn" onclick="doSignup()">
-          ✨ Create Account
-        </button>
-      </div>
-    </div>
-
-    <p class="login-footer">🪷 Jai Shri Krishna · IGC Sudama Sewa 2025-26</p>
+<div class="login-wrap">
+  <div class="logo-area">
+    <div class="logo-circle">🪷</div>
+    <h1>IGC Sudama Sewa</h1>
+    <p>Devotee Donation &amp; Team Performance Tracker</p>
   </div>
 
-  <script type="module">
-    import { auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-             updateProfile, setDoc, doc, onAuthStateChanged, toast }
-      from "./app.js";
+  <div class="card" style="border-color:var(--border-strong);padding:26px;">
+    <div class="tab-switch">
+      <button class="tab-btn2 active" id="tab-login-btn" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn2" id="tab-signup-btn" onclick="switchTab('signup')">Create Account</button>
+    </div>
 
-    window.switchTab = (tab) => {
-      document.getElementById("form-login").classList.toggle("hidden", tab !== "login");
-      document.getElementById("form-signup").classList.toggle("hidden", tab !== "signup");
-      document.getElementById("tab-login").classList.toggle("active", tab === "login");
-      document.getElementById("tab-signup").classList.toggle("active", tab === "signup");
-    };
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block mt-2" id="login-btn" onclick="doLogin()">🙏 Sign In</button>
+      <p class="text-center text-muted text-sm mt-2">Contact Super Admin for account access</p>
+    </div>
 
-    // Redirect if already logged in
-    onAuthStateChanged(auth, u => { if (u) window.location.href = "dashboard.html"; });
+    <!-- SIGNUP -->
+    <div id="form-signup" class="hidden">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" id="su-name" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="su-email" placeholder="your@email.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="su-pass" placeholder="Min 6 characters"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input class="form-input" type="password" id="su-pass2" placeholder="Repeat password"/>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block mt-2" id="signup-btn" onclick="doSignup()">✨ Create Account</button>
+    </div>
+  </div>
 
-    window.doLogin = async () => {
-      const email = document.getElementById("login-email").value.trim();
-      const pass  = document.getElementById("login-pass").value;
-      if (!email || !pass) return toast("Please fill all fields", "error");
-      const btn = document.getElementById("login-btn");
-      btn.disabled = true; btn.textContent = "Signing in...";
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        toast("Welcome! Jai Shri Krishna 🙏");
-        window.location.href = "dashboard.html";
-      } catch(e) {
-        toast(e.message.replace("Firebase: ","").replace(/ \(auth\/.*\)\.?/,""), "error");
-        btn.disabled = false; btn.innerHTML = "🙏 Sign In";
-      }
-    };
+  <p class="text-center text-muted text-sm mt-2">🪷 Jai Shri Krishna · IGC Sudama Sewa 2025-26</p>
+</div>
 
-    window.doSignup = async () => {
-      const name  = document.getElementById("su-name").value.trim();
-      const email = document.getElementById("su-email").value.trim();
-      const pass  = document.getElementById("su-pass").value;
-      const pass2 = document.getElementById("su-pass2").value;
-      if (!name || !email || !pass) return toast("Fill all fields", "error");
-      if (pass !== pass2) return toast("Passwords do not match!", "error");
-      const btn = document.getElementById("signup-btn");
-      btn.disabled = true; btn.textContent = "Creating...";
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: name });
-        await setDoc(doc(db, "users", cred.user.uid), {
-          name, email, role: "viewer",
-          department: null, team: null,
-          createdAt: new Date().toISOString()
-        });
-        toast("Account created! Welcome 🙏");
-        window.location.href = "dashboard.html";
-      } catch(e) {
-        toast(e.message.replace("Firebase: ","").replace(/ \(auth\/.*\)\.?/,""), "error");
-        btn.disabled = false; btn.innerHTML = "✨ Create Account";
-      }
-    };
+<!-- Firebase SDKs (compat = no import/export needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
-    // Enter key support
-    document.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        const loginHidden = document.getElementById("form-login").classList.contains("hidden");
-        if (!loginHidden) doLogin(); else doSignup();
-      }
+<script>
+// ── Firebase init ──────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyBmd3BqGl8nlutKiY8MNVm8Cpc_UG_64fc",
+  authDomain: "igc-sudama-sewa.firebaseapp.com",
+  projectId: "igc-sudama-sewa",
+  storageBucket: "igc-sudama-sewa.firebasestorage.app",
+  messagingSenderId: "348826796176",
+  appId: "1:348826796176:web:a7ae157cb0eb5fcf94d815"
+});
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── Redirect if already logged in ─────────────────────────────
+auth.onAuthStateChanged(user => { if (user) location.href = "dashboard.html"; });
+
+// ── Tab switch ─────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById("form-login").classList.toggle("hidden", tab !== "login");
+  document.getElementById("form-signup").classList.toggle("hidden", tab !== "signup");
+  document.getElementById("tab-login-btn").classList.toggle("active", tab === "login");
+  document.getElementById("tab-signup-btn").classList.toggle("active", tab === "signup");
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function toast(msg, type = "success") {
+  const c = document.getElementById("toast-container");
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.innerHTML = (type === "success" ? "✅ " : "❌ ") + msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Login ──────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const pass  = document.getElementById("login-pass").value;
+  if (!email || !pass) return toast("Please fill all fields", "error");
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true; btn.textContent = "Signing in...";
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    toast("Welcome! Jai Shri Krishna 🙏");
+    location.href = "dashboard.html";
+  } catch(e) {
+    toast(e.message.replace("Firebase: ","").replace(/ \(auth\/.*\)\./,""), "error");
+    btn.disabled = false; btn.innerHTML = "🙏 Sign In";
+  }
+}
+
+// ── Signup ─────────────────────────────────────────────────────
+async function doSignup() {
+  const name  = document.getElementById("su-name").value.trim();
+  const email = document.getElementById("su-email").value.trim();
+  const pass  = document.getElementById("su-pass").value;
+  const pass2 = document.getElementById("su-pass2").value;
+  if (!name || !email || !pass) return toast("Fill all fields", "error");
+  if (pass !== pass2) return toast("Passwords do not match!", "error");
+  const btn = document.getElementById("signup-btn");
+  btn.disabled = true; btn.textContent = "Creating...";
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    await db.collection("users").doc(cred.user.uid).set({
+      name, email, role: "viewer",
+      department: null, team: null,
+      createdAt: new Date().toISOString()
     });
-  </script>
+    toast("Account created! Welcome 🙏");
+    location.href = "dashboard.html";
+  } catch(e) {
+    toast(e.message.replace("Firebase: ","").replace(/ \(auth\/.*\)\./,""), "error");
+    btn.disabled = false; btn.innerHTML = "✨ Create Account";
+  }
+}
+</script>
 </body>
 </html>
