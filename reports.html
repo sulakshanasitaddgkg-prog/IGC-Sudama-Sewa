@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reports — IGC Sudama Sewa</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .tab-bar { display:flex; gap:4px; background:var(--bg-card2); border-radius:10px; padding:4px; margin-bottom:20px; }
+    .tab-btn { flex:1; padding:9px 6px; background:transparent; color:var(--text-muted);
+               border:none; border-radius:7px; cursor:pointer;
+               font-family:'Mukta',sans-serif; font-size:13px; font-weight:600; transition:all .2s; }
+    .tab-btn.active { background:linear-gradient(135deg,var(--saffron),var(--saffron-dark)); color:#fff; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span></div>
+
+    <div class="page-header">
+      <div style="flex:1">
+        <h2 class="text-gold" style="font-size:19px;">📈 Reports & Analytics</h2>
+        <p class="text-muted text-sm mt-1" id="fy-label">FY 2025-26</p>
+      </div>
+      <div class="flex gap-2">
+        <select class="form-select" style="width:auto" id="fy-sel" onchange="loadAndRender()">
+          <option value="2024-25">FY 2024-25</option>
+          <option value="2025-26" selected>FY 2025-26</option>
+          <option value="2026-27">FY 2026-27</option>
+        </select>
+        <button class="btn btn-success" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Summary stats -->
+      <div class="grid-4 mb-3" id="stats-row">
+        <div class="stat-card orange"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total FY</div></div>
+        <div class="stat-card gold"><div class="stat-value" id="s-txn">—</div><div class="stat-label">Transactions</div></div>
+        <div class="stat-card green"><div class="stat-value" id="s-donors">—</div><div class="stat-label">Unique Donors</div></div>
+        <div class="stat-card red"><div class="stat-value" id="s-inactive">—</div><div class="stat-label">Inactive Regular</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('monthly',this)">📅 Monthly</button>
+        <button class="tab-btn" onclick="switchTab('dept',this)">🏛️ Department</button>
+        <button class="tab-btn" onclick="switchTab('topdonors',this)">👥 Top Donors</button>
+        <button class="tab-btn" onclick="switchTab('inactive',this)">⚠️ Inactive</button>
+      </div>
+
+      <!-- Monthly tab -->
+      <div class="tab-pane active" id="tab-monthly">
+        <div class="card card-gold mb-3">
+          <h3 class="text-gold mb-3" style="font-size:14px">Monthly Collection (Stacked)</h3>
+          <canvas id="monthly-chart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Month</th><th>Cash</th><th>Online</th><th>Kind</th><th>Total</th><th>Transactions</th></tr></thead>
+            <tbody id="monthly-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Dept tab -->
+      <div class="tab-pane" id="tab-dept">
+        <div class="card card-gold mb-3">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-gold" style="font-size:14px">Department Performance</h3>
+            <button class="btn btn-success btn-sm" onclick="exportDeptCSV()">⬇️ Export CSV</button>
+          </div>
+          <canvas id="dept-chart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Department</th><th>Teams</th><th>Collected</th><th>Target</th><th>Achievement</th><th>Status</th></tr></thead>
+            <tbody id="dept-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Top donors tab -->
+      <div class="tab-pane" id="tab-topdonors">
+        <div class="card">
+          <h3 class="text-gold mb-3" style="font-size:15px">🏆 Top Donors</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>#</th><th>Donor</th><th>Department</th><th>Team</th><th>Total</th><th>Transactions</th></tr></thead>
+            <tbody id="top-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Inactive tab -->
+      <div class="tab-pane" id="tab-inactive">
+        <div class="card">
+          <div class="mb-3">
+            <h3 class="text-gold" style="font-size:15px">⚠️ Regular Donors — Not Donated in 3+ Months</h3>
+            <p class="text-muted text-sm mt-1" id="inactive-count"></p>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Mobile</th><th>Department</th><th>Team</th><th>Last Donation</th><th>Fixed Amt</th></tr></thead>
+            <tbody id="inactive-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { db, collection, getDocs, query, orderBy, initSidebar,
+           DEPARTMENTS_TEAMS, MONTHLY_TARGET, FY_MONTHS, formatINR, achColor, achBadge, fyFilter }
+    from "./app.js";
+
+  let donations=[], donors=[], charts={};
+
+  async function init() {
+    await initSidebar("reports.html");
+    const [dSnap, donorSnap] = await Promise.all([
+      getDocs(query(collection(db,"donations"), orderBy("date","desc"))),
+      getDocs(collection(db,"donors"))
+    ]);
+    donations = dSnap.docs.map(d=>({id:d.id,...d.data()}));
+    donors    = donorSnap.docs.map(d=>({id:d.id,...d.data()}));
+    render();
+  }
+
+  window.loadAndRender = render;
+
+  function render() {
+    const fy     = document.getElementById("fy-sel").value;
+    const fyYear = parseInt(fy.split("-")[0]);
+    document.getElementById("fy-label").textContent = `FY ${fy}`;
+
+    const fyDons = fyFilter(donations, fy, "all");
+    const total  = fyDons.filter(d=>d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
+
+    // Stats
+    document.getElementById("s-total").textContent   = formatINR(total);
+    document.getElementById("s-txn").textContent     = fyDons.length;
+    document.getElementById("s-donors").textContent  = new Set(fyDons.map(d=>d.donorId)).size;
+
+    const now = new Date();
+    const inactive = donors.filter(d=>{
+      if (d.frequency!=="Regular"||d.status!=="active") return false;
+      const last = donations.filter(x=>x.donorId===d.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      if (!last) return true;
+      const diff = (now.getFullYear()-new Date(last.date).getFullYear())*12+(now.getMonth()-new Date(last.date).getMonth());
+      return diff>=3;
+    });
+    document.getElementById("s-inactive").textContent = inactive.length;
+
+    // Monthly
+    const monthlyData = FY_MONTHS.map(m=>{
+      const y   = m.month>=4 ? fyYear : fyYear+1;
+      const md  = donations.filter(d=>d.date&&new Date(d.date).getMonth()+1===m.month&&new Date(d.date).getFullYear()===y);
+      const cash  = md.filter(d=>d.mode==="Cash").reduce((s,d)=>s+(d.amount||0),0);
+      const online= md.filter(d=>d.mode==="Online").reduce((s,d)=>s+(d.amount||0),0);
+      const kind  = md.filter(d=>d.mode==="Kind").length;
+      return {label:m.label.slice(0,3), cash, online, kind, total:cash+online, count:md.length};
+    });
+
+    if (charts.monthly) charts.monthly.destroy();
+    const ctx1 = document.getElementById("monthly-chart").getContext("2d");
+    charts.monthly = new Chart(ctx1,{
+      type:"bar",
+      data:{
+        labels:monthlyData.map(m=>m.label),
+        datasets:[
+          {label:"Cash",   data:monthlyData.map(m=>m.cash),   backgroundColor:"#FF6B00", borderRadius:0},
+          {label:"Online", data:monthlyData.map(m=>m.online), backgroundColor:"#D4A017", borderRadius:[4,4,0,0]},
+        ]
+      },
+      options:{ responsive:true, scales:{
+        x:{stacked:true,ticks:{color:"#997755",font:{size:11}},grid:{display:false}},
+        y:{stacked:true,ticks:{color:"#997755",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`},grid:{color:"rgba(255,255,255,.04)"}}
+      },plugins:{legend:{labels:{color:"#997755",font:{size:12}}},
+        tooltip:{callbacks:{label:v=>v.dataset.label+": "+formatINR(v.raw)}}}}
+    });
+
+    document.getElementById("monthly-tbody").innerHTML = monthlyData.map(m=>`
+      <tr>
+        <td class="font-bold">${m.label}</td>
+        <td class="text-saffron">${formatINR(m.cash)}</td>
+        <td class="text-gold">${formatINR(m.online)}</td>
+        <td class="text-success">${m.kind}</td>
+        <td class="font-bold">${formatINR(m.total)}</td>
+        <td class="text-muted">${m.count}</td>
+      </tr>`).join("") +
+      `<tr style="border-top:2px solid var(--border-strong)">
+        <td class="font-bold text-gold">TOTAL</td>
+        <td class="font-bold">${formatINR(monthlyData.reduce((s,m)=>s+m.cash,0))}</td>
+        <td class="font-bold">${formatINR(monthlyData.reduce((s,m)=>s+m.online,0))}</td>
+        <td class="font-bold">${monthlyData.reduce((s,m)=>s+m.kind,0)}</td>
+        <td class="font-bold text-gold">${formatINR(total)}</td>
+        <td class="font-bold">${fyDons.length}</td>
+      </tr>`;
+
+    // Dept
+    const deptData = Object.keys(DEPARTMENTS_TEAMS).map(dept=>{
+      const tot = fyDons.filter(d=>d.department===dept&&d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
+      const tgt = DEPARTMENTS_TEAMS[dept].length * MONTHLY_TARGET * 12;
+      const pct = Math.min(100,Math.round(tot/tgt*100))||0;
+      return {dept,tot,tgt,pct};
+    }).sort((a,b)=>b.tot-a.tot);
+
+    if (charts.dept) charts.dept.destroy();
+    const ctx2 = document.getElementById("dept-chart").getContext("2d");
+    charts.dept = new Chart(ctx2,{
+      type:"bar",
+      data:{
+        labels:deptData.map(d=>d.dept.slice(0,8)),
+        datasets:[{data:deptData.map(d=>d.tot),backgroundColor:deptData.map(d=>achColor(d.pct)),borderRadius:4,borderSkipped:false}]
+      },
+      options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>formatINR(v.raw)}}},
+        scales:{x:{ticks:{color:"#997755",font:{size:11}},grid:{display:false}},y:{ticks:{color:"#997755",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`},grid:{color:"rgba(255,255,255,.04)"}}}}
+    });
+
+    document.getElementById("dept-tbody").innerHTML = deptData.map(d=>`
+      <tr>
+        <td class="font-bold">${d.dept}</td>
+        <td class="text-muted">${DEPARTMENTS_TEAMS[d.dept]?.length}</td>
+        <td class="text-gold font-bold">${formatINR(d.tot)}</td>
+        <td class="text-muted">${formatINR(d.tgt)}</td>
+        <td>
+          <div class="flex items-center gap-2">
+            <div class="progress-wrap" style="flex:1;max-width:80px">
+              <div class="progress-fill" style="width:${d.pct}%;background:${achColor(d.pct)}"></div>
+            </div>
+            <span style="font-weight:700;font-size:13px;color:${achColor(d.pct)}">${d.pct}%</span>
+          </div>
+        </td>
+        <td>${achBadge(d.pct)}</td>
+      </tr>`).join("");
+
+    // Top donors
+    const donorMap = {};
+    fyDons.filter(d=>d.mode!=="Kind").forEach(d=>{
+      const key = d.donorName||"Unknown";
+      if (!donorMap[key]) donorMap[key]={name:key,tot:0,count:0,dept:d.department,team:d.team};
+      donorMap[key].tot+=d.amount||0;
+      donorMap[key].count++;
+    });
+    const topDonors = Object.values(donorMap).sort((a,b)=>b.tot-a.tot).slice(0,15);
+    const medals=["🥇","🥈","🥉"];
+    document.getElementById("top-tbody").innerHTML = topDonors.length
+      ? topDonors.map((d,i)=>`<tr>
+          <td class="text-muted">${medals[i]||"#"+(i+1)}</td>
+          <td class="font-bold">${d.name}</td>
+          <td class="text-muted">${d.dept||""}</td>
+          <td class="text-muted">${d.team||""}</td>
+          <td class="text-gold font-bold">${formatINR(d.tot)}</td>
+          <td class="text-muted">${d.count}</td>
+        </tr>`).join("")
+      : `<tr><td colspan="6" class="text-center text-muted" style="padding:40px">No data</td></tr>`;
+
+    // Inactive
+    document.getElementById("inactive-count").textContent = `${inactive.length} regular donors need follow-up`;
+    document.getElementById("inactive-tbody").innerHTML = inactive.length
+      ? inactive.map(d=>{
+          const last = donations.filter(x=>x.donorId===d.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+          return `<tr>
+            <td class="font-bold">${d.name}</td>
+            <td>${d.mobile||"-"}</td>
+            <td>${d.department||""}</td>
+            <td>${d.team||""}</td>
+            <td class="text-danger">${last?last.date:"Never"}</td>
+            <td class="text-gold">${d.defaultAmount?"₹"+d.defaultAmount:"-"}</td>
+          </tr>`;}).join("")
+      : `<tr><td colspan="6" class="text-center" style="padding:40px">
+          <div style="font-size:40px;margin-bottom:10px">✅</div>
+          <span class="text-muted">All regular donors are active!</span>
+        </td></tr>`;
+
+    window._fyDons   = fyDons;
+    window._deptData = deptData;
+  }
+
+  window.switchTab = (name, btn) => {
+    document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.getElementById("tab-"+name).classList.add("active");
+    btn.classList.add("active");
+  };
+
+  window.exportCSV = () => {
+    const fy = document.getElementById("fy-sel").value;
+    const rows = [["Date","Donor","Department","Team","Mode","Amount","Remarks","FY"],
+      ...window._fyDons.map(d=>[d.date,d.donorName,d.department,d.team,d.mode,d.amount||0,d.remarks||"",d.fy])];
+    download(rows, `IGC_Donations_FY${fy}.csv`);
+  };
+
+  window.exportDeptCSV = () => {
+    const fy = document.getElementById("fy-sel").value;
+    const rows = [["Department","Collected","Target","Achievement%"],
+      ...window._deptData.map(d=>[d.dept,d.tot,d.tgt,d.pct+"%"])];
+    download(rows, `IGC_Dept_FY${fy}.csv`);
+  };
+
+  function download(rows, filename) {
+    const csv = rows.map(r=>r.map(c=>`"${c}"`).join(",")).join("\n");
+    const a   = Object.assign(document.createElement("a"),{
+      href: URL.createObjectURL(new Blob([csv],{type:"text/csv"})),
+      download: filename
+    });
+    a.click();
+  }
+
+  init();
+</script>
+</body>
+</html>
