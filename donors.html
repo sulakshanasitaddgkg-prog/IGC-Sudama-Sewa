@@ -129,6 +129,7 @@
     render();
   }
 
+  window._filteredDonors = [];
   window.render = () => {
     const search = document.getElementById("search").value.toLowerCase();
     const dept   = document.getElementById("f-dept").value;
@@ -142,6 +143,7 @@
       const mst= !status || d.status === status;
       return ms && md && mst;
     });
+    window._filteredDonors = filtered;
 
     document.getElementById("summary-text").textContent =
       `${filtered.length} donors · Regular: ${donors.filter(d=>d.frequency==="Regular"&&d.status==="active").length}`;
@@ -156,7 +158,7 @@
       return;
     }
 
-    document.getElementById("donors-grid").innerHTML = filtered.map(d=>{
+    document.getElementById("donors-grid").innerHTML = filtered.map((d,idx)=>{
       const regBadge = d.frequency==="Regular"
         ? `<span class="badge badge-saffron">🔄 Regular</span>`
         : `<span class="badge badge-gold">⚡ Irregular</span>`;
@@ -164,11 +166,11 @@
         ? `<span class="badge badge-success">Active</span>`
         : `<span class="badge badge-danger">Inactive</span>`;
       const border = d.frequency==="Regular" && d.status==="active"
-        ? "rgba(255,107,0,.3)" : "var(--border)";
+        ? "var(--border-blue)" : "var(--border)";
       const acts = isAdmin ? `
         <div class="flex gap-2 mt-2" style="padding-top:10px;border-top:1px solid var(--border)">
-          <button class="btn btn-outline btn-sm" onclick='editDonor(${JSON.stringify(d).replace(/'/g,"&#39;")})'>✏️ Edit</button>
-          <button class="btn btn-sm" style="background:${d.status==="active"?"rgba(245,158,11,.1)":"rgba(34,197,94,.1)"};color:${d.status==="active"?"var(--warning)":"var(--success)"};border:1px solid ${d.status==="active"?"rgba(245,158,11,.3)":"rgba(34,197,94,.3)"}"
+          <button class="btn btn-outline btn-sm" onclick="editDonor(${idx})">✏️ Edit</button>
+          <button class="btn btn-sm" style="background:${d.status==="active"?"#FEF9C3":"#DCFCE7"};color:${d.status==="active"?"var(--warning)":"var(--success)"};border:1px solid ${d.status==="active"?"#FDE68A":"#BBF7D0"}"
             onclick="toggleStatus('${d.id}','${d.status}')">
             ${d.status==="active"?"⏸ Deactivate":"▶ Reactivate"}
           </button>
@@ -221,7 +223,9 @@
     document.getElementById("f-amt").disabled = document.getElementById("f-freq").value !== "Regular";
   };
 
-  window.editDonor = (d) => {
+  window.editDonor = (idx) => {
+    const d = window._filteredDonors[idx];
+    if (!d) return;
     document.getElementById("edit-id").value = d.id;
     document.getElementById("modal-title").textContent = "✏️ Edit Donor";
     document.getElementById("save-btn").textContent = "✅ Update";
