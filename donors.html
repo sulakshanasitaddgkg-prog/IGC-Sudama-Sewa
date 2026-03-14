@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Donors — IGC Sudama Sewa</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .donor-card { transition: opacity .2s; }
+    .donor-card.inactive { opacity:.55; }
+    .donors-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span></div>
+
+    <div class="page-header">
+      <div style="flex:1">
+        <h2 class="text-gold" style="font-size:19px;">👥 Donor Profiles</h2>
+        <p class="text-muted text-sm mt-1" id="summary-text">Loading...</p>
+      </div>
+      <button class="btn btn-primary hidden" id="add-btn" onclick="openModal()">➕ Add Donor</button>
+    </div>
+
+    <div class="page-body">
+      <div class="card mb-3">
+        <div class="flex gap-2" style="flex-wrap:wrap">
+          <input class="form-input" style="flex:1;min-width:180px" id="search" placeholder="🔍 Name, mobile, team..." oninput="render()"/>
+          <select class="form-select" style="width:auto" id="f-dept" onchange="render()">
+            <option value="">All Departments</option>
+          </select>
+          <select class="form-select" style="width:auto" id="f-status" onchange="render()">
+            <option value="active">Active</option>
+            <option value="">All</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="donors-grid" id="donors-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="modal-title">👤 Add Donor</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <input type="hidden" id="edit-id"/>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="f-name" placeholder="Donor's full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number</label>
+        <input class="form-input" id="f-mobile" placeholder="10-digit number"/>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Department *</label>
+        <select class="form-select" id="f-dep" onchange="updateTeams()">
+          <option value="">Select Department</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team *</label>
+        <select class="form-select" id="f-team">
+          <option value="">Select Team</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Frequency</label>
+        <select class="form-select" id="f-freq" onchange="toggleAmt()">
+          <option>Regular</option><option>Irregular</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fixed Amount (₹/month)</label>
+        <input class="form-input" type="number" id="f-amt" placeholder="e.g. 500"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="f-notes" rows="2" placeholder="Additional notes..."></textarea>
+    </div>
+    <div class="form-group hidden" id="status-row">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="f-status2">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive (Old Devotee)</option>
+      </select>
+    </div>
+    <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveDonor()">➕ Add Donor</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
+           query, orderBy, initSidebar, DEPARTMENTS_TEAMS, buildDeptOptions,
+           buildTeamOptions, toast }
+    from "./app.js";
+
+  let donors=[], isAdmin=false;
+
+  async function init() {
+    const info = await initSidebar("donors.html");
+    isAdmin = info.isAdmin;
+    if (isAdmin) document.getElementById("add-btn").classList.remove("hidden");
+
+    document.getElementById("f-dept").innerHTML =
+      `<option value="">All Departments</option>` +
+      Object.keys(DEPARTMENTS_TEAMS).map(d=>`<option value="${d}">${d}</option>`).join("");
+    document.getElementById("f-dep").innerHTML = buildDeptOptions();
+
+    const snap = await getDocs(query(collection(db,"donors"), orderBy("name")));
+    donors = snap.docs.map(d=>({id:d.id,...d.data()}));
+    render();
+  }
+
+  window.render = () => {
+    const search = document.getElementById("search").value.toLowerCase();
+    const dept   = document.getElementById("f-dept").value;
+    const status = document.getElementById("f-status").value;
+
+    const filtered = donors.filter(d=>{
+      const ms = !search || (d.name||"").toLowerCase().includes(search)
+                          || (d.mobile||"").includes(search)
+                          || (d.team||"").toLowerCase().includes(search);
+      const md = !dept   || d.department === dept;
+      const mst= !status || d.status === status;
+      return ms && md && mst;
+    });
+
+    document.getElementById("summary-text").textContent =
+      `${filtered.length} donors · Regular: ${donors.filter(d=>d.frequency==="Regular"&&d.status==="active").length}`;
+
+    if (!filtered.length) {
+      document.getElementById("donors-grid").innerHTML =
+        `<div class="card text-center" style="grid-column:1/-1;padding:60px">
+          <div style="font-size:48px;margin-bottom:14px">👥</div>
+          <p class="text-muted mb-3">No donors found</p>
+          ${isAdmin?`<button class="btn btn-primary" onclick="openModal()">Add First Donor</button>`:""}
+        </div>`;
+      return;
+    }
+
+    document.getElementById("donors-grid").innerHTML = filtered.map(d=>{
+      const regBadge = d.frequency==="Regular"
+        ? `<span class="badge badge-saffron">🔄 Regular</span>`
+        : `<span class="badge badge-gold">⚡ Irregular</span>`;
+      const stBadge = d.status==="active"
+        ? `<span class="badge badge-success">Active</span>`
+        : `<span class="badge badge-danger">Inactive</span>`;
+      const border = d.frequency==="Regular" && d.status==="active"
+        ? "rgba(255,107,0,.3)" : "var(--border)";
+      const acts = isAdmin ? `
+        <div class="flex gap-2 mt-2" style="padding-top:10px;border-top:1px solid var(--border)">
+          <button class="btn btn-outline btn-sm" onclick='editDonor(${JSON.stringify(d).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+          <button class="btn btn-sm" style="background:${d.status==="active"?"rgba(245,158,11,.1)":"rgba(34,197,94,.1)"};color:${d.status==="active"?"var(--warning)":"var(--success)"};border:1px solid ${d.status==="active"?"rgba(245,158,11,.3)":"rgba(34,197,94,.3)"}"
+            onclick="toggleStatus('${d.id}','${d.status}')">
+            ${d.status==="active"?"⏸ Deactivate":"▶ Reactivate"}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="delDonor('${d.id}')">🗑️</button>
+        </div>` : "";
+
+      return `<div class="card donor-card ${d.status==="inactive"?"inactive":""}" style="border-color:${border}">
+        <div class="flex justify-between items-center mb-2">
+          <div>
+            <div class="font-bold" style="font-size:15px">${d.name||""}</div>
+            ${d.mobile?`<div class="text-muted text-sm mt-1">📱 ${d.mobile}</div>`:""}
+          </div>
+          <div class="flex gap-1" style="flex-direction:column;align-items:flex-end">
+            ${regBadge}${stBadge}
+          </div>
+        </div>
+        <div class="text-muted text-sm" style="display:flex;flex-direction:column;gap:3px">
+          <span>🏛️ ${d.department||""}</span>
+          <span>👥 ${d.team||""}</span>
+          ${d.frequency==="Regular"&&d.defaultAmount>0?`<span class="text-gold">💰 ₹${d.defaultAmount}/month</span>`:""}
+        </div>
+        ${acts}
+      </div>`;
+    }).join("");
+  };
+
+  window.openModal = () => {
+    document.getElementById("edit-id").value="";
+    document.getElementById("modal-title").textContent="👤 Add Donor";
+    document.getElementById("save-btn").textContent="➕ Add Donor";
+    document.getElementById("f-name").value="";
+    document.getElementById("f-mobile").value="";
+    document.getElementById("f-dep").value="";
+    document.getElementById("f-team").innerHTML=buildTeamOptions("");
+    document.getElementById("f-freq").value="Regular";
+    document.getElementById("f-amt").value="";
+    document.getElementById("f-notes").value="";
+    document.getElementById("status-row").classList.add("hidden");
+    document.getElementById("modal").classList.add("show");
+  };
+
+  window.closeModal = () => document.getElementById("modal").classList.remove("show");
+
+  window.updateTeams = () => {
+    const dept = document.getElementById("f-dep").value;
+    document.getElementById("f-team").innerHTML = buildTeamOptions(dept);
+  };
+
+  window.toggleAmt = () => {
+    document.getElementById("f-amt").disabled = document.getElementById("f-freq").value !== "Regular";
+  };
+
+  window.editDonor = (d) => {
+    document.getElementById("edit-id").value = d.id;
+    document.getElementById("modal-title").textContent = "✏️ Edit Donor";
+    document.getElementById("save-btn").textContent = "✅ Update";
+    document.getElementById("f-name").value   = d.name||"";
+    document.getElementById("f-mobile").value = d.mobile||"";
+    document.getElementById("f-dep").value    = d.department||"";
+    document.getElementById("f-team").innerHTML = buildTeamOptions(d.department||"", d.team||"");
+    document.getElementById("f-freq").value   = d.frequency||"Regular";
+    document.getElementById("f-amt").value    = d.defaultAmount||"";
+    document.getElementById("f-notes").value  = d.notes||"";
+    document.getElementById("f-status2").value= d.status||"active";
+    document.getElementById("status-row").classList.remove("hidden");
+    document.getElementById("modal").classList.add("show");
+  };
+
+  window.saveDonor = async () => {
+    const name   = document.getElementById("f-name").value.trim();
+    const mobile = document.getElementById("f-mobile").value.trim();
+    const dept   = document.getElementById("f-dep").value;
+    const team   = document.getElementById("f-team").value;
+    const freq   = document.getElementById("f-freq").value;
+    const amt    = parseFloat(document.getElementById("f-amt").value)||0;
+    const notes  = document.getElementById("f-notes").value.trim();
+    const status = document.getElementById("f-status2").value||"active";
+    const editId = document.getElementById("edit-id").value;
+
+    if (!name) return toast("Name is required","error");
+    if (!dept||!team) return toast("Select department and team","error");
+
+    const btn = document.getElementById("save-btn");
+    btn.disabled=true; btn.textContent="Saving...";
+
+    const payload = { name, mobile, department:dept, team, frequency:freq,
+      defaultAmount:amt, notes, status, updatedAt:new Date().toISOString() };
+
+    try {
+      if (editId) {
+        await updateDoc(doc(db,"donors",editId), payload);
+        toast("Donor updated! ✅");
+      } else {
+        payload.createdAt = new Date().toISOString();
+        await addDoc(collection(db,"donors"), payload);
+        toast("Donor added! 🙏");
+      }
+      closeModal();
+      const snap = await getDocs(query(collection(db,"donors"), orderBy("name")));
+      donors = snap.docs.map(d=>({id:d.id,...d.data()}));
+      render();
+    } catch(e) { toast(e.message,"error"); }
+    btn.disabled=false;
+  };
+
+  window.toggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus==="active"?"inactive":"active";
+    await updateDoc(doc(db,"donors",id), { status:newStatus });
+    toast(`Donor marked ${newStatus}`);
+    donors = donors.map(d=>d.id===id?{...d,status:newStatus}:d);
+    render();
+  };
+
+  window.delDonor = async (id) => {
+    if (!confirm("Delete this donor?")) return;
+    await deleteDoc(doc(db,"donors",id));
+    toast("Deleted");
+    donors = donors.filter(d=>d.id!==id);
+    render();
+  };
+
+  init();
+</script>
+</body>
+</html>
