@@ -1,50 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Users — IGC Sudama Sewa</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-<div id="toast-container"></div>
 <div class="layout">
   <aside class="sidebar" id="sidebar"></aside>
   <div class="main">
-    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px">IGC Sudama Sewa</span></div>
+    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span></div>
+
     <div class="page-header">
-      <div style="flex:1"><h2 class="text-gold" style="font-size:18px">🛡️ User Management</h2><p class="text-muted text-sm mt-1" id="summary-text">Loading...</p></div>
+      <div style="flex:1">
+        <h2 class="text-gold" style="font-size:19px;">🛡️ User Management</h2>
+        <p class="text-muted text-sm mt-1" id="summary-text">Loading...</p>
+      </div>
       <button class="btn btn-primary" onclick="openModal()">➕ Create User</button>
     </div>
+
     <div class="page-body">
-      <div class="card mb-3"><div class="table-wrap"><table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Dept Access</th><th>Team Access</th></tr></thead>
-        <tbody id="users-tbody"></tbody>
-      </table></div></div>
+      <div class="card mb-3">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Dept Access</th><th>Team Access</th></tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Permissions legend -->
       <div class="card">
-        <h3 class="text-gold mb-3" style="font-size:13px">🔐 Role Permissions</h3>
+        <h3 class="text-gold mb-3" style="font-size:14px">🔐 Role Permissions</h3>
         <div class="grid-3">
-          <div class="card" style="padding:13px"><div class="font-bold text-gold mb-2">👑 Super Admin</div><div class="text-muted text-sm mb-1">✓ Full access</div><div class="text-muted text-sm mb-1">✓ Add/Edit/Delete all data</div><div class="text-muted text-sm mb-1">✓ Manage users</div><div class="text-muted text-sm">✓ All reports</div></div>
-          <div class="card" style="padding:13px"><div class="font-bold text-gold mb-2">🛡️ Admin</div><div class="text-muted text-sm mb-1">✓ Add/Edit donations</div><div class="text-muted text-sm mb-1">✓ Add/Edit donors</div><div class="text-muted text-sm mb-1">✓ View all reports</div><div class="text-muted text-sm">✓ Cannot delete</div></div>
-          <div class="card" style="padding:13px"><div class="font-bold text-gold mb-2">👁️ Viewer</div><div class="text-muted text-sm mb-1">✓ View assigned dept/team</div><div class="text-muted text-sm mb-1">✓ No data entry</div><div class="text-muted text-sm mb-1">✓ Basic reports</div><div class="text-muted text-sm">✓ Read-only</div></div>
+          ${["👑 Super Admin|Full access|Add/Edit/Delete all|Manage users|All reports",
+             "🛡️ Admin|Add/Edit donations|Add/Edit donors|View all reports|Cannot delete",
+             "👁️ Viewer|View assigned dept|No data entry|Basic reports|Read-only"]
+            .map(r=>{const [role,...perms]=r.split("|");return `
+              <div class="card" style="padding:14px">
+                <div class="font-bold text-gold mb-2">${role}</div>
+                ${perms.map(p=>`<div class="text-muted text-sm mb-1">✓ ${p}</div>`).join("")}
+              </div>`;}).join("")}
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Create user modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <div class="modal-header"><h3>➕ Create New User</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-header">
+      <h3>➕ Create New User</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
     <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="f-name" placeholder="User's full name"/></div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="f-email" placeholder="user@email.com"/></div>
     <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="f-pass" placeholder="Min 6 characters"/></div>
-    <div class="form-group"><label class="form-label">Role</label>
-      <select class="form-select" id="f-role"><option value="viewer">👁️ Viewer</option><option value="admin">🛡️ Admin</option><option value="superadmin">👑 Super Admin</option></select>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-select" id="f-role">
+        <option value="viewer">👁️ Viewer</option>
+        <option value="admin">🛡️ Admin</option>
+        <option value="superadmin">👑 Super Admin</option>
+      </select>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">Dept Access</label><select class="form-select" id="f-dept" onchange="updateTeams()"><option value="">All Departments</option></select></div>
-      <div class="form-group"><label class="form-label">Team Access</label><select class="form-select" id="f-team"><option value="">All Teams</option></select></div>
+      <div class="form-group">
+        <label class="form-label">Dept Access</label>
+        <select class="form-select" id="f-dept" onchange="updateTeams()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team Access</label>
+        <select class="form-select" id="f-team">
+          <option value="">All Teams</option>
+        </select>
+      </div>
     </div>
     <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
       <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
@@ -53,75 +89,124 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="common.js"></script>
-<script>
-var users=[];
-Object.keys(DEPARTMENTS_TEAMS).forEach(function(d){ document.getElementById("f-dept").innerHTML+='<option value="'+d+'">'+d+'</option>'; });
+<script type="module">
+  import { db, auth, collection, getDocs, updateDoc, doc,
+           createUserWithEmailAndPassword, updateProfile, setDoc,
+           initSidebar, DEPARTMENTS_TEAMS, buildDeptOptions, buildTeamOptions, toast }
+    from "./common.js";
 
-initPage("users.html", function(info) {
-  if(!info.isAdmin){
-    document.querySelector(".page-body").innerHTML='<div class="card text-center" style="padding:70px"><div style="font-size:44px;margin-bottom:12px">🔒</div><p class="text-muted">Admin access required</p></div>';
-    return;
+  let users=[];
+
+  async function init() {
+    const info = await initSidebar("users.html");
+    if (!info.isAdmin) {
+      document.querySelector(".page-body").innerHTML =
+        `<div class="card text-center" style="padding:80px">
+          <div style="font-size:48px;margin-bottom:14px">🔒</div>
+          <p class="text-muted">Admin access required</p>
+        </div>`;
+      return;
+    }
+    document.getElementById("f-dept").innerHTML = buildDeptOptions();
+    await loadUsers();
   }
-  loadUsers();
-});
 
-function loadUsers(){
-  db.collection("users").get().then(function(snap){
-    users=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    document.getElementById("summary-text").textContent=users.length+" users registered";
+  async function loadUsers() {
+    const snap = await getDocs(collection(db,"users"));
+    users = snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById("summary-text").textContent = `${users.length} users registered`;
     renderTable();
-  });
-}
+  }
 
-function renderTable(){
-  document.getElementById("users-tbody").innerHTML=users.map(function(u){
-    var deptOpts='<option value="">All Depts</option>'+Object.keys(DEPARTMENTS_TEAMS).map(function(d){return '<option value="'+d+'"'+(d===u.department?" selected":"")+'>'+d+'</option>';}).join("");
-    var teamOpts='<option value="">All Teams</option>'+((DEPARTMENTS_TEAMS[u.department])||[]).map(function(t){return '<option value="'+t+'"'+(t===u.team?" selected":"")+'>'+t+'</option>';}).join("");
-    return '<tr>'+
-      '<td class="font-bold">'+(u.name||"-")+'</td>'+
-      '<td class="text-muted text-sm">'+(u.email||"")+'</td>'+
-      '<td><select class="form-select" style="width:auto;padding:4px 8px;font-size:12px" onchange="updateRole(\''+u.id+'\',this.value)">'+
-        '<option value="superadmin"'+(u.role==="superadmin"?" selected":"")+'>👑 Super Admin</option>'+
-        '<option value="admin"'+(u.role==="admin"?" selected":"")+'>🛡️ Admin</option>'+
-        '<option value="viewer"'+(!u.role||u.role==="viewer"?" selected":"")+'>👁️ Viewer</option>'+
-      '</select></td>'+
-      '<td><select class="form-select" style="width:auto;padding:4px 8px;font-size:12px" onchange="updateAccess(\''+u.id+'\',this.value,\'\')">'+deptOpts+'</select></td>'+
-      '<td><select class="form-select" style="width:auto;padding:4px 8px;font-size:12px" '+(u.department?"":" disabled")+'  onchange="updateAccess(\''+u.id+'\',\''+( u.department||"")+'\',this.value)">'+teamOpts+'</select></td>'+
-    '</tr>';
-  }).join("");
-}
+  function renderTable() {
+    document.getElementById("users-tbody").innerHTML = users.map(u=>`
+      <tr>
+        <td class="font-bold">${u.name||"-"}</td>
+        <td class="text-muted text-sm">${u.email||""}</td>
+        <td>
+          <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px"
+            onchange="updateRole('${u.id}',this.value)">
+            <option value="superadmin" ${u.role==="superadmin"?"selected":""}>👑 Super Admin</option>
+            <option value="admin"      ${u.role==="admin"?"selected":""}>🛡️ Admin</option>
+            <option value="viewer"     ${u.role==="viewer"||!u.role?"selected":""}>👁️ Viewer</option>
+          </select>
+        </td>
+        <td>
+          <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px"
+            onchange="updateAccess('${u.id}',this.value,'')">
+            <option value="">All Depts</option>
+            ${Object.keys(DEPARTMENTS_TEAMS).map(d=>`<option value="${d}" ${d===u.department?"selected":""}>${d}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px"
+            onchange="updateAccess('${u.id}','${u.department||""}',this.value)"
+            ${!u.department?"disabled":""}>
+            <option value="">All Teams</option>
+            ${(DEPARTMENTS_TEAMS[u.department]||[]).map(t=>`<option value="${t}" ${t===u.team?"selected":""}>${t}</option>`).join("")}
+          </select>
+        </td>
+      </tr>`).join("");
+  }
 
-function updateRole(id,role){ db.collection("users").doc(id).update({role:role}).then(function(){toast("Role updated ✅"); users=users.map(function(u){return u.id===id?Object.assign({},u,{role:role}):u;}); }); }
-function updateAccess(id,dept,team){ db.collection("users").doc(id).update({department:dept||null,team:team||null}).then(function(){toast("Access updated ✅"); users=users.map(function(u){return u.id===id?Object.assign({},u,{department:dept,team:team}):u;}); renderTable(); }); }
-function openModal(){
-  ["f-name","f-email","f-pass"].forEach(function(id){document.getElementById(id).value="";});
-  document.getElementById("f-role").value="viewer";
-  document.getElementById("f-dept").value="";
-  document.getElementById("f-team").innerHTML='<option value="">All Teams</option>';
-  document.getElementById("modal").classList.add("show");
-}
-function closeModal(){ document.getElementById("modal").classList.remove("show"); }
-function updateTeams(){ document.getElementById("f-team").innerHTML='<option value="">All Teams</option>'+buildTeamOptions(document.getElementById("f-dept").value); }
-function createUser(){
-  var name=document.getElementById("f-name").value.trim();
-  var email=document.getElementById("f-email").value.trim();
-  var pass=document.getElementById("f-pass").value;
-  var role=document.getElementById("f-role").value;
-  var dept=document.getElementById("f-dept").value;
-  var team=document.getElementById("f-team").value;
-  if(!name||!email||!pass) return toast("All fields required","error");
-  var btn=document.getElementById("save-btn"); btn.disabled=true; btn.textContent="Creating...";
-  auth.createUserWithEmailAndPassword(email,pass).then(function(cred){
-    return cred.user.updateProfile({displayName:name}).then(function(){
-      return db.collection("users").doc(cred.user.uid).set({name:name,email:email,role:role,department:dept||null,team:team||null,createdAt:new Date().toISOString()});
-    });
-  }).then(function(){ toast("User created! 🎉"); closeModal(); loadUsers(); btn.disabled=false; btn.textContent="✅ Create User"; })
-  .catch(function(e){ toast(e.message.replace("Firebase: ",""),"error"); btn.disabled=false; btn.textContent="✅ Create User"; });
-}
+  window.updateRole = async (id, role) => {
+    await updateDoc(doc(db,"users",id), {role});
+    toast("Role updated ✅");
+    users = users.map(u=>u.id===id?{...u,role}:u);
+  };
+
+  window.updateAccess = async (id, department, team) => {
+    await updateDoc(doc(db,"users",id), {department:department||null, team:team||null});
+    toast("Access updated ✅");
+    users = users.map(u=>u.id===id?{...u,department,team}:u);
+    renderTable();
+  };
+
+  window.openModal = () => {
+    document.getElementById("f-name").value="";
+    document.getElementById("f-email").value="";
+    document.getElementById("f-pass").value="";
+    document.getElementById("f-role").value="viewer";
+    document.getElementById("f-dept").value="";
+    document.getElementById("f-team").innerHTML=buildTeamOptions("");
+    document.getElementById("modal").classList.add("show");
+  };
+
+  window.closeModal = () => document.getElementById("modal").classList.remove("show");
+
+  window.updateTeams = () => {
+    document.getElementById("f-team").innerHTML = buildTeamOptions(document.getElementById("f-dept").value);
+  };
+
+  window.createUser = async () => {
+    const name  = document.getElementById("f-name").value.trim();
+    const email = document.getElementById("f-email").value.trim();
+    const pass  = document.getElementById("f-pass").value;
+    const role  = document.getElementById("f-role").value;
+    const dept  = document.getElementById("f-dept").value;
+    const team  = document.getElementById("f-team").value;
+
+    if (!name||!email||!pass) return toast("All fields required","error");
+    const btn = document.getElementById("save-btn");
+    btn.disabled=true; btn.textContent="Creating...";
+
+    try {
+      // Create in Firebase Auth
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, {displayName:name});
+      await setDoc(doc(db,"users",cred.user.uid), {
+        name, email, role,
+        department: dept||null, team: team||null,
+        createdAt: new Date().toISOString()
+      });
+      toast("User created! 🎉");
+      closeModal();
+      await loadUsers();
+    } catch(e) { toast(e.message.replace("Firebase: ",""),"error"); }
+    btn.disabled=false; btn.textContent="✅ Create User";
+  };
+
+  init();
 </script>
 </body>
 </html>
