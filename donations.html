@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Donations — IGC Sudama Sewa</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-<div id="toast-container"></div>
 <div class="layout">
   <aside class="sidebar" id="sidebar"></aside>
   <div class="main">
-    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px">IGC Sudama Sewa</span></div>
+    <div class="mobile-bar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span>
+    </div>
+
     <div class="page-header">
-      <div style="flex:1"><h2 class="text-gold" style="font-size:18px">💰 Donations</h2><p class="text-muted text-sm mt-1" id="summary-text">Loading...</p></div>
+      <div style="flex:1">
+        <h2 class="text-gold" style="font-size:19px;">💰 Donations</h2>
+        <p class="text-muted text-sm mt-1" id="summary-text">Loading...</p>
+      </div>
       <button class="btn btn-primary hidden" id="add-btn" onclick="openModal()">➕ Add Donation</button>
     </div>
+
     <div class="page-body">
+      <!-- Filters -->
       <div class="card mb-3">
         <div class="flex gap-2" style="flex-wrap:wrap">
-          <input class="form-input" style="flex:1;min-width:160px" id="search" placeholder="🔍 Search donor, team, dept..." oninput="render()"/>
+          <input class="form-input" style="flex:1;min-width:180px" id="search" placeholder="🔍 Search donor, team, dept..." oninput="render()"/>
           <select class="form-select" style="width:auto" id="f-fy" onchange="render()">
-            <option value="2024-25">FY 2024-25</option><option value="2025-26" selected>FY 2025-26</option><option value="2026-27">FY 2026-27</option>
+            <option value="2024-25">FY 2024-25</option>
+            <option value="2025-26" selected>FY 2025-26</option>
+            <option value="2026-27">FY 2026-27</option>
           </select>
           <select class="form-select" style="width:auto" id="f-month" onchange="render()">
             <option value="">All Months</option>
-            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option>
+            <option value="6">June</option><option value="7">July</option>
+            <option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option>
+            <option value="12">December</option><option value="1">January</option>
+            <option value="2">February</option><option value="3">March</option>
           </select>
           <select class="form-select" style="width:auto" id="f-dept" onchange="render()">
             <option value="">All Departments</option>
           </select>
         </div>
       </div>
+
+      <!-- Table -->
       <div class="card">
-        <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Date</th><th>Donor</th><th>Department</th><th>Team</th><th>Mode</th><th>Amount</th><th>Remarks</th><th id="th-act" class="hidden">Actions</th></tr></thead>
-          <tbody id="don-tbody"></tbody>
-        </table></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Date</th><th>Donor</th><th>Department</th>
+                <th>Team</th><th>Mode</th><th>Amount</th><th>Remarks</th>
+                <th id="actions-th" class="hidden">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="don-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -47,34 +70,67 @@
 <!-- Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal modal-lg">
-    <div class="modal-header"><h3 id="modal-title">➕ Add Donation</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-header">
+      <h3 id="modal-title">➕ Add Donation</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
     <input type="hidden" id="edit-id"/>
+
     <div class="form-group" style="position:relative">
       <label class="form-label">Donor Name *</label>
-      <input class="form-input" id="f-donor" placeholder="Type to search donor..." autocomplete="off" oninput="searchDonor(this.value)"/>
-      <div class="ac-box hidden" id="donor-ac"></div>
+      <input class="form-input" id="f-donor" placeholder="Search donor..." autocomplete="off" oninput="searchDonor(this.value)"/>
+      <div class="autocomplete-box hidden" id="donor-ac"></div>
     </div>
+
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">Department *</label><select class="form-select" id="f-dep" onchange="updateTeams()"></select></div>
-      <div class="form-group"><label class="form-label">Team *</label><select class="form-select" id="f-team"></select></div>
+      <div class="form-group">
+        <label class="form-label">Department *</label>
+        <select class="form-select" id="f-dep" onchange="updateTeams()">
+          <option value="">Select Department</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team *</label>
+        <select class="form-select" id="f-team">
+          <option value="">Select Team</option>
+        </select>
+      </div>
     </div>
+
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">Mode *</label>
-        <select class="form-select" id="f-mode" onchange="toggleAmt()">
+      <div class="form-group">
+        <label class="form-label">Mode *</label>
+        <select class="form-select" id="f-mode" onchange="toggleAmount()">
           <option>Cash</option><option>Online</option><option>Kind</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label" id="amt-lbl">Amount (₹) *</label><input class="form-input" type="number" id="f-amount" placeholder="Enter amount"/></div>
+      <div class="form-group">
+        <label class="form-label" id="amt-label">Amount (₹) *</label>
+        <input class="form-input" type="number" id="f-amount" placeholder="Enter amount"/>
+      </div>
     </div>
+
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="f-date"/></div>
-      <div class="form-group"><label class="form-label">Financial Year</label>
+      <div class="form-group">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="f-date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Financial Year</label>
         <select class="form-select" id="f-fy2">
-          <option value="2024-25">FY 2024-25</option><option value="2025-26" selected>FY 2025-26</option><option value="2026-27">FY 2026-27</option>
+          <option value="2024-25">FY 2024-25</option>
+          <option value="2025-26" selected>FY 2025-26</option>
+          <option value="2026-27">FY 2026-27</option>
         </select>
       </div>
     </div>
-    <div class="form-group"><label class="form-label" id="rem-lbl">Remarks</label><textarea class="form-textarea" id="f-remarks" rows="2" placeholder="Optional notes..."></textarea></div>
+
+    <div class="form-group">
+      <label class="form-label" id="rem-label">Remarks</label>
+      <textarea class="form-textarea" id="f-remarks" rows="2" placeholder="Optional notes..."></textarea>
+    </div>
+
     <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
       <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveDonation()">➕ Save</button>
@@ -82,148 +138,222 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="common.js"></script>
-<script>
-var donations=[], donors=[], isAdmin=false;
+<script type="module">
+  import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
+           query, orderBy, initSidebar, DEPARTMENTS_TEAMS, buildDeptOptions,
+           buildTeamOptions, formatINR, fyFilter, toast }
+    from "./common.js";
 
-// Build dept filter dropdown
-Object.keys(DEPARTMENTS_TEAMS).forEach(function(d) {
-  document.getElementById("f-dept").innerHTML += '<option value="'+d+'">'+d+'</option>';
-});
+  let donations=[], donors=[], isAdmin=false;
 
-initPage("donations.html", function(info) {
-  isAdmin = info.isAdmin;
-  if (isAdmin) { document.getElementById("add-btn").classList.remove("hidden"); document.getElementById("th-act").classList.remove("hidden"); }
-  document.getElementById("f-dep").innerHTML = buildDeptOptions();
-  document.getElementById("f-date").value = new Date().toISOString().split("T")[0];
+  async function init() {
+    const info = await initSidebar("donations.html");
+    isAdmin = info.isAdmin;
 
-  Promise.all([
-    db.collection("donations").orderBy("date","desc").get(),
-    db.collection("donors").orderBy("name").get()
-  ]).then(function(results) {
-    donations = results[0].docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-    donors    = results[1].docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+    // Build dept filter
+    document.getElementById("f-dept").innerHTML =
+      `<option value="">All Departments</option>` +
+      Object.keys(DEPARTMENTS_TEAMS).map(d=>`<option value="${d}">${d}</option>`).join("");
+
+    // Build dept in modal
+    document.getElementById("f-dep").innerHTML = buildDeptOptions();
+
+    if (isAdmin) {
+      document.getElementById("add-btn").classList.remove("hidden");
+      document.getElementById("actions-th").classList.remove("hidden");
+    }
+
+    const [dSnap, donorSnap] = await Promise.all([
+      getDocs(query(collection(db,"donations"), orderBy("date","desc"))),
+      getDocs(collection(db,"donors"))
+    ]);
+    donations = dSnap.docs.map(d=>({id:d.id,...d.data()}));
+    donors    = donorSnap.docs.map(d=>({id:d.id,...d.data()}));
+    window.donors = donors;
     render();
-  });
-});
+  }
 
-function render() {
-  var search = (document.getElementById("search").value||"").toLowerCase();
-  var fy     = document.getElementById("f-fy").value;
-  var month  = document.getElementById("f-month").value;
-  var dept   = document.getElementById("f-dept").value;
-  var filt   = fyFilter(donations, fy, month||"all").filter(function(d) {
-    var ms = !search||((d.donorName||"").toLowerCase().includes(search)||(d.team||"").toLowerCase().includes(search)||(d.department||"").toLowerCase().includes(search));
-    return ms && (!dept||d.department===dept);
-  });
-  var total = filt.filter(function(d){ return d.mode!=="Kind"; }).reduce(function(s,d){ return s+(d.amount||0); },0);
-  document.getElementById("summary-text").textContent = filt.length+" entries · Total: "+formatINR(total);
+  window.render = () => {
+    const search = document.getElementById("search").value.toLowerCase();
+    const fy     = document.getElementById("f-fy").value;
+    const month  = document.getElementById("f-month").value;
+    const dept   = document.getElementById("f-dept").value;
 
-  document.getElementById("don-tbody").innerHTML = filt.length ? filt.map(function(d,i) {
-    var mb = d.mode==="Cash"?'<span class="badge badge-saffron">💵 Cash</span>':d.mode==="Online"?'<span class="badge badge-gold">📱 Online</span>':'<span class="badge badge-success">🎁 Kind</span>';
-    var amt= d.mode==="Kind"?'<span class="text-success">Kind</span>':'<span class="text-gold font-bold">'+formatINR(d.amount)+'</span>';
-    var acts= isAdmin?'<td><div class="flex gap-2"><button class="btn btn-outline btn-sm" onclick="editDon(\''+d.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delDon(\''+d.id+'\')">🗑️</button></div></td>':"";
-    return '<tr><td class="text-muted">'+(i+1)+'</td><td class="text-muted">'+(d.date||"")+'</td><td class="font-bold">'+(d.donorName||"")+'</td><td>'+(d.department||"")+'</td><td class="text-muted">'+(d.team||"")+'</td><td>'+mb+'</td><td>'+amt+'</td><td class="text-muted text-sm">'+(d.remarks||"-")+'</td>'+acts+'</tr>';
-  }).join("") : '<tr><td colspan="'+(isAdmin?9:8)+'" class="text-center text-muted" style="padding:40px">No donations found</td></tr>';
-}
+    const filtered = fyFilter(donations, fy, month).filter(d => {
+      const mSearch = !search ||
+        (d.donorName||"").toLowerCase().includes(search) ||
+        (d.team||"").toLowerCase().includes(search) ||
+        (d.department||"").toLowerCase().includes(search);
+      const mDept = !dept || d.department === dept;
+      return mSearch && mDept;
+    });
 
-function openModal() {
-  document.getElementById("edit-id").value="";
-  document.getElementById("modal-title").textContent="➕ Add Donation";
-  document.getElementById("save-btn").textContent="➕ Save";
-  document.getElementById("f-donor").value="";
-  document.getElementById("f-donor").dataset.id="";
-  document.getElementById("f-dep").innerHTML=buildDeptOptions();
-  document.getElementById("f-team").innerHTML=buildTeamOptions("");
-  document.getElementById("f-mode").value="Cash";
-  document.getElementById("f-amount").value="";
-  document.getElementById("f-amount").disabled=false;
-  document.getElementById("f-date").value=new Date().toISOString().split("T")[0];
-  document.getElementById("f-remarks").value="";
-  document.getElementById("modal").classList.add("show");
-}
-function closeModal() { document.getElementById("modal").classList.remove("show"); document.getElementById("donor-ac").classList.add("hidden"); }
-function updateTeams() { document.getElementById("f-team").innerHTML=buildTeamOptions(document.getElementById("f-dep").value); }
-function toggleAmt() {
-  var m=document.getElementById("f-mode").value;
-  document.getElementById("f-amount").disabled=(m==="Kind");
-  document.getElementById("amt-lbl").textContent=m==="Kind"?"Amount (N/A)":"Amount (₹) *";
-  document.getElementById("rem-lbl").textContent=m==="Kind"?"Remarks (Item & Qty) *":"Remarks";
-}
-function searchDonor(val) {
-  var ac=document.getElementById("donor-ac");
-  if(val.length<2){ac.classList.add("hidden");return;}
-  var matches=donors.filter(function(d){return (d.name||"").toLowerCase().includes(val.toLowerCase());}).slice(0,6);
-  if(!matches.length){ac.classList.add("hidden");return;}
-  ac.innerHTML=matches.map(function(d){
-    return '<div class="ac-item" onclick="selectDonor(\''+d.id+'\',\''+d.name.replace(/'/g,"&#39;")+'\',\''+
-      (d.department||"").replace(/'/g,"&#39;")+'\',\''+(d.team||"").replace(/'/g,"&#39;")+'\','+(d.defaultAmount||0)+')"><div class="ac-name">'+d.name+'</div><div class="ac-sub">'+(d.department||"")+' · '+(d.team||"")+'</div></div>';
-  }).join("");
-  ac.classList.remove("hidden");
-}
-function selectDonor(id,name,dept,team,amt) {
-  document.getElementById("f-donor").value=name;
-  document.getElementById("f-donor").dataset.id=id;
-  if(dept){document.getElementById("f-dep").value=dept;document.getElementById("f-team").innerHTML=buildTeamOptions(dept,team);}
-  if(amt>0) document.getElementById("f-amount").value=amt;
-  document.getElementById("donor-ac").classList.add("hidden");
-}
-function editDon(id) {
-  var d=donations.find(function(x){return x.id===id;});
-  if(!d) return;
-  document.getElementById("edit-id").value=id;
-  document.getElementById("modal-title").textContent="✏️ Edit Donation";
-  document.getElementById("save-btn").textContent="✅ Update";
-  document.getElementById("f-donor").value=d.donorName||"";
-  document.getElementById("f-donor").dataset.id=d.donorId||"";
-  document.getElementById("f-dep").innerHTML=buildDeptOptions(d.department||"");
-  document.getElementById("f-team").innerHTML=buildTeamOptions(d.department||"",d.team||"");
-  document.getElementById("f-mode").value=d.mode||"Cash";
-  document.getElementById("f-amount").value=d.amount||"";
-  document.getElementById("f-amount").disabled=d.mode==="Kind";
-  document.getElementById("f-date").value=d.date||"";
-  document.getElementById("f-fy2").value=d.fy||"2025-26";
-  document.getElementById("f-remarks").value=d.remarks||"";
-  document.getElementById("modal").classList.add("show");
-}
-function saveDonation() {
-  var donorName=document.getElementById("f-donor").value.trim();
-  var donorId  =document.getElementById("f-donor").dataset.id||"";
-  var dept     =document.getElementById("f-dep").value;
-  var team     =document.getElementById("f-team").value;
-  var mode     =document.getElementById("f-mode").value;
-  var amount   =parseFloat(document.getElementById("f-amount").value)||0;
-  var date     =document.getElementById("f-date").value;
-  var fy       =document.getElementById("f-fy2").value;
-  var remarks  =document.getElementById("f-remarks").value.trim();
-  var editId   =document.getElementById("edit-id").value;
-  if(!donorName) return toast("Enter donor name","error");
-  if(!dept||!team) return toast("Select department and team","error");
-  if(mode!=="Kind"&&!amount) return toast("Enter donation amount","error");
-  if(!date) return toast("Select date","error");
-  var btn=document.getElementById("save-btn"); btn.disabled=true; btn.textContent="Saving...";
-  var dt=new Date(date);
-  var payload={donorName:donorName,donorId:donorId,department:dept,team:team,mode:mode,
-    amount:mode==="Kind"?0:amount,date:date,fy:fy,month:dt.getMonth()+1,year:dt.getFullYear(),
-    remarks:remarks,updatedAt:new Date().toISOString()};
-  var p=editId?db.collection("donations").doc(editId).update(payload):(payload.createdAt=new Date().toISOString(),db.collection("donations").add(payload));
-  p.then(function(){
-    toast(editId?"Donation updated! ✅":"Donation saved! 🙏");
-    closeModal();
-    return db.collection("donations").orderBy("date","desc").get();
-  }).then(function(snap){ donations=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}); render(); btn.disabled=false; btn.textContent=editId?"✅ Update":"➕ Save"; })
-  .catch(function(e){toast(e.message,"error");btn.disabled=false;});
-}
-function delDon(id) {
-  if(!confirm("Delete this donation?")) return;
-  db.collection("donations").doc(id).delete().then(function(){
-    toast("Deleted"); donations=donations.filter(function(d){return d.id!==id;}); render();
+    const total = filtered.filter(d=>d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
+    document.getElementById("summary-text").textContent =
+      `${filtered.length} entries · Total: ${formatINR(total)}`;
+
+    const rows = filtered.map((d,i) => {
+      const modeBadge = d.mode==="Cash"
+        ? `<span class="badge badge-saffron">💵 Cash</span>`
+        : d.mode==="Online"
+        ? `<span class="badge badge-gold">📱 Online</span>`
+        : `<span class="badge badge-success">🎁 Kind</span>`;
+      const amt = d.mode==="Kind" ? `<span class="text-success">Kind</span>`
+                                  : `<span class="text-gold font-bold">${formatINR(d.amount)}</span>`;
+      const acts = isAdmin
+        ? `<td><div class="flex gap-2">
+            <button class="btn btn-outline btn-sm" onclick='editDon(${JSON.stringify(d)})'>✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="delDon('${d.id}')">🗑️</button>
+           </div></td>`
+        : "";
+      return `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td class="text-muted">${d.date||""}</td>
+        <td class="font-bold">${d.donorName||""}</td>
+        <td>${d.department||""}</td>
+        <td class="text-muted">${d.team||""}</td>
+        <td>${modeBadge}</td>
+        <td>${amt}</td>
+        <td class="text-muted text-sm">${d.remarks||"-"}</td>
+        ${acts}
+      </tr>`;
+    }).join("");
+
+    document.getElementById("don-tbody").innerHTML = rows ||
+      `<tr><td colspan="${isAdmin?9:8}" class="text-center text-muted" style="padding:40px">No donations found</td></tr>`;
+  };
+
+  window.openModal = () => {
+    document.getElementById("edit-id").value = "";
+    document.getElementById("modal-title").textContent = "➕ Add Donation";
+    document.getElementById("f-donor").value = "";
+    document.getElementById("f-dep").value   = "";
+    document.getElementById("f-team").innerHTML = buildTeamOptions("");
+    document.getElementById("f-mode").value  = "Cash";
+    document.getElementById("f-amount").value = "";
+    document.getElementById("f-amount").disabled = false;
+    document.getElementById("f-date").value  = new Date().toISOString().split("T")[0];
+    document.getElementById("f-fy2").value   = "2025-26";
+    document.getElementById("f-remarks").value = "";
+    document.getElementById("modal").classList.add("show");
+  };
+
+  window.closeModal = () => {
+    document.getElementById("modal").classList.remove("show");
+    document.getElementById("donor-ac").classList.add("hidden");
+  };
+
+  window.updateTeams = () => {
+    const dept = document.getElementById("f-dep").value;
+    document.getElementById("f-team").innerHTML = buildTeamOptions(dept);
+  };
+
+  window.toggleAmount = () => {
+    const mode = document.getElementById("f-mode").value;
+    document.getElementById("f-amount").disabled = (mode === "Kind");
+    document.getElementById("amt-label").textContent = mode === "Kind" ? "Amount (N/A)" : "Amount (₹) *";
+    document.getElementById("rem-label").textContent = mode === "Kind" ? "Remarks (Item, Qty) *" : "Remarks";
+  };
+
+  window.searchDonor = (val) => {
+    const ac = document.getElementById("donor-ac");
+    if (val.length < 2) { ac.classList.add("hidden"); return; }
+    const matches = donors.filter(d=>(d.name||"").toLowerCase().includes(val.toLowerCase())).slice(0,6);
+    if (!matches.length) { ac.classList.add("hidden"); return; }
+    ac.innerHTML = matches.map(d=>`
+      <div class="autocomplete-item" onclick="selectDonor(${JSON.stringify({id:d.id,name:d.name,department:d.department||'',team:d.team||'',defaultAmount:d.defaultAmount||0}).replace(/'/g,'&#39;')})">
+        <div class="ac-name">${d.name}</div>
+        <div class="ac-sub">${d.department||""} · ${d.team||""}</div>
+      </div>`).join("");
+    ac.classList.remove("hidden");
+  };
+
+  window.selectDonor = (d) => {
+    document.getElementById("f-donor").value = d.name;
+    document.getElementById("f-donor").dataset.id = d.id;
+    if (d.department) {
+      document.getElementById("f-dep").value = d.department;
+      document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
+    }
+    if (d.defaultAmount) document.getElementById("f-amount").value = d.defaultAmount;
+    document.getElementById("donor-ac").classList.add("hidden");
+  };
+
+  window.editDon = (d) => {
+    document.getElementById("edit-id").value = d.id;
+    document.getElementById("modal-title").textContent = "✏️ Edit Donation";
+    document.getElementById("f-donor").value = d.donorName || "";
+    document.getElementById("f-donor").dataset.id = d.donorId || "";
+    document.getElementById("f-dep").value = d.department || "";
+    document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
+    document.getElementById("f-mode").value  = d.mode || "Cash";
+    document.getElementById("f-amount").value = d.amount || "";
+    document.getElementById("f-amount").disabled = d.mode === "Kind";
+    document.getElementById("f-date").value  = d.date || "";
+    document.getElementById("f-fy2").value   = d.fy || "2025-26";
+    document.getElementById("f-remarks").value = d.remarks || "";
+    document.getElementById("modal").classList.add("show");
+  };
+
+  window.saveDonation = async () => {
+    const donorName = document.getElementById("f-donor").value.trim();
+    const donorId   = document.getElementById("f-donor").dataset.id || "";
+    const department= document.getElementById("f-dep").value;
+    const team      = document.getElementById("f-team").value;
+    const mode      = document.getElementById("f-mode").value;
+    const amount    = parseFloat(document.getElementById("f-amount").value) || 0;
+    const date      = document.getElementById("f-date").value;
+    const fy        = document.getElementById("f-fy2").value;
+    const remarks   = document.getElementById("f-remarks").value.trim();
+    const editId    = document.getElementById("edit-id").value;
+
+    if (!donorName) return toast("Enter donor name","error");
+    if (!department || !team) return toast("Select department and team","error");
+    if (mode !== "Kind" && !amount) return toast("Enter donation amount","error");
+    if (!date) return toast("Select date","error");
+
+    const btn = document.getElementById("save-btn");
+    btn.disabled = true; btn.textContent = "Saving...";
+
+    const dt = new Date(date);
+    const payload = { donorName, donorId, department, team, mode,
+      amount: mode==="Kind"?0:amount, date, fy,
+      month: dt.getMonth()+1, year: dt.getFullYear(),
+      remarks, updatedAt: new Date().toISOString() };
+
+    try {
+      if (editId) {
+        await updateDoc(doc(db,"donations",editId), payload);
+        toast("Donation updated! ✅");
+      } else {
+        payload.createdAt = new Date().toISOString();
+        await addDoc(collection(db,"donations"), payload);
+        toast("Donation saved! 🙏");
+      }
+      closeModal();
+      // Reload
+      const snap = await getDocs(query(collection(db,"donations"), orderBy("date","desc")));
+      donations = snap.docs.map(d=>({id:d.id,...d.data()}));
+      render();
+    } catch(e) { toast(e.message,"error"); }
+    btn.disabled=false; btn.textContent = editId ? "✅ Update" : "➕ Save";
+  };
+
+  window.delDon = async (id) => {
+    if (!confirm("Delete this donation?")) return;
+    await deleteDoc(doc(db,"donations",id));
+    toast("Deleted");
+    donations = donations.filter(d=>d.id!==id);
+    render();
+  };
+
+  // Close autocomplete on outside click
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#f-donor") && !e.target.closest("#donor-ac"))
+      document.getElementById("donor-ac").classList.add("hidden");
   });
-}
-document.addEventListener("click", function(e){ if(!e.target.closest("#f-donor")&&!e.target.closest("#donor-ac")) document.getElementById("donor-ac").classList.add("hidden"); });
+
+  init();
 </script>
 </body>
 </html>
