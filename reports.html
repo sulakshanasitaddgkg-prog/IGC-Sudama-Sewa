@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    .tab-bar { display:flex; gap:4px; background:var(--bg-card2); border-radius:10px; padding:4px; margin-bottom:20px; }
-    .tab-btn { flex:1; padding:9px 6px; background:transparent; color:var(--text-muted);
+    .tab-bar { display:flex; gap:4px; background:var(--grey-100); border-radius:10px; padding:4px; margin-bottom:20px; flex-wrap:wrap; }
+    .tab-btn { flex:1; min-width:100px; padding:9px 6px; background:transparent; color:var(--text-muted);
                border:none; border-radius:7px; cursor:pointer;
-               font-family:'Mukta',sans-serif; font-size:13px; font-weight:600; transition:all .2s; }
-    .tab-btn.active { background:linear-gradient(135deg,var(--saffron),var(--saffron-dark)); color:#fff; }
+               font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:600; transition:all .2s; }
+    .tab-btn.active { background:linear-gradient(135deg,var(--blue),var(--blue-mid)); color:#fff; }
     .tab-pane { display:none; }
     .tab-pane.active { display:block; }
+    canvas { max-height: 260px !important; }
   </style>
 </head>
 <body>
@@ -58,7 +59,9 @@
       <div class="tab-pane active" id="tab-monthly">
         <div class="card card-gold mb-3">
           <h3 class="text-gold mb-3" style="font-size:14px">Monthly Collection (Stacked)</h3>
-          <canvas id="monthly-chart" height="200"></canvas>
+          <div style="position:relative;height:240px">
+            <canvas id="monthly-chart"></canvas>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrap"><table>
@@ -75,7 +78,9 @@
             <h3 class="text-gold" style="font-size:14px">Department Performance</h3>
             <button class="btn btn-success btn-sm" onclick="exportDeptCSV()">⬇️ Export CSV</button>
           </div>
-          <canvas id="dept-chart" height="200"></canvas>
+          <div style="position:relative;height:240px">
+            <canvas id="dept-chart"></canvas>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrap"><table>
@@ -173,11 +178,11 @@
       data:{
         labels:monthlyData.map(m=>m.label),
         datasets:[
-          {label:"Cash",   data:monthlyData.map(m=>m.cash),   backgroundColor:"#FF6B00", borderRadius:0},
-          {label:"Online", data:monthlyData.map(m=>m.online), backgroundColor:"#D4A017", borderRadius:[4,4,0,0]},
+          {label:"Cash",   data:monthlyData.map(m=>m.cash),   backgroundColor:"#3B82F6", borderRadius:0},
+          {label:"Online", data:monthlyData.map(m=>m.online), backgroundColor:"#0EA5E9", borderRadius:[4,4,0,0]},
         ]
       },
-      options:{ responsive:true, scales:{
+      options:{ responsive:true, maintainAspectRatio:false, scales:{
         x:{stacked:true,ticks:{color:"#997755",font:{size:11}},grid:{display:false}},
         y:{stacked:true,ticks:{color:"#997755",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`},grid:{color:"rgba(255,255,255,.04)"}}
       },plugins:{legend:{labels:{color:"#997755",font:{size:12}}},
@@ -218,7 +223,7 @@
         labels:deptData.map(d=>d.dept.slice(0,8)),
         datasets:[{data:deptData.map(d=>d.tot),backgroundColor:deptData.map(d=>achColor(d.pct)),borderRadius:4,borderSkipped:false}]
       },
-      options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>formatINR(v.raw)}}},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>formatINR(v.raw)}}},
         scales:{x:{ticks:{color:"#997755",font:{size:11}},grid:{display:false}},y:{ticks:{color:"#997755",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`},grid:{color:"rgba(255,255,255,.04)"}}}}
     });
 
