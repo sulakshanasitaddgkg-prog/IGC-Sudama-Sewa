@@ -1,241 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Dashboard — IGC Sudama Sewa</title>
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<div id="toast-container"></div>
 <div class="layout">
   <aside class="sidebar" id="sidebar"></aside>
-
   <div class="main">
-    <!-- Mobile bar -->
-    <div class="mobile-bar">
-      <button class="hamburger" id="hamburger">☰</button>
-      <span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span>
-    </div>
-
+    <div class="mobile-bar"><button class="hamburger" id="hamburger">☰</button><span class="font-cinzel text-gold" style="font-size:14px">IGC Sudama Sewa</span></div>
     <div class="page-header">
-      <div style="flex:1">
-        <h2 class="text-gold" style="font-size:19px;">📊 Dashboard</h2>
-        <p class="text-muted text-sm mt-1">IGC Sudama Sewa — Donation Overview</p>
-      </div>
-      <div class="flex gap-2" style="flex-wrap:wrap;">
-        <select class="form-select" style="width:auto" id="fy-sel">
-          <option value="2024-25">FY 2024-25</option>
-          <option value="2025-26" selected>FY 2025-26</option>
-          <option value="2026-27">FY 2026-27</option>
+      <div style="flex:1"><h2 class="text-gold" style="font-size:18px">📊 Dashboard</h2><p class="text-muted text-sm mt-1">Overview — Donation Summary</p></div>
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <select class="form-select" style="width:auto" id="fy-sel" onchange="render()">
+          <option value="2024-25">FY 2024-25</option><option value="2025-26" selected>FY 2025-26</option><option value="2026-27">FY 2026-27</option>
         </select>
-        <select class="form-select" style="width:auto" id="month-sel">
+        <select class="form-select" style="width:auto" id="month-sel" onchange="render()">
           <option value="all">All Months</option>
-          <option value="4">April</option><option value="5">May</option>
-          <option value="6">June</option><option value="7">July</option>
-          <option value="8">August</option><option value="9">September</option>
-          <option value="10">October</option><option value="11">November</option>
-          <option value="12">December</option><option value="1">January</option>
-          <option value="2">February</option><option value="3">March</option>
+          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
         </select>
-        <button class="btn btn-primary hidden" id="add-don-btn" onclick="window.location.href='donations.html'">
-          ➕ Add Donation
-        </button>
+        <button class="btn btn-primary hidden" id="add-btn" onclick="location.href='donations.html'">➕ Add Donation</button>
       </div>
     </div>
-
     <div class="page-body">
-      <!-- Stats -->
-      <div class="grid-4 mb-3" id="stats-row">
+      <div class="grid-4 mb-3">
         <div class="stat-card orange"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Collections</div><div class="stat-icon">💰</div></div>
         <div class="stat-card gold"><div class="stat-value" id="s-txn">—</div><div class="stat-label">Transactions</div><div class="stat-icon">📋</div></div>
         <div class="stat-card green"><div class="stat-value" id="s-donors">—</div><div class="stat-label">Active Donors</div><div class="stat-icon">👥</div></div>
         <div class="stat-card red"><div class="stat-value" id="s-kind">—</div><div class="stat-label">Kind Donations</div><div class="stat-icon">🎁</div></div>
       </div>
-
-      <!-- Charts -->
       <div class="grid-2 mb-3">
-        <div class="card card-gold">
-          <h3 class="text-gold mb-3" style="font-size:14px;">📈 Monthly Collection Trend</h3>
-          <canvas id="monthly-chart" height="200"></canvas>
-        </div>
-        <div class="card card-gold">
-          <h3 class="text-gold mb-3" style="font-size:14px;">🥧 Payment Mode</h3>
-          <canvas id="mode-chart" height="200"></canvas>
-        </div>
+        <div class="card card-gold"><h3 class="text-gold mb-3" style="font-size:13px">📈 Monthly Trend</h3><canvas id="monthly-chart" height="210"></canvas></div>
+        <div class="card card-gold"><h3 class="text-gold mb-3" style="font-size:13px">🥧 Payment Mode</h3><canvas id="mode-chart" height="210"></canvas></div>
       </div>
-
-      <!-- Department progress -->
       <div class="card mb-3">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-gold" style="font-size:15px;">🏛️ Department Performance</h3>
+          <h3 class="text-gold" style="font-size:14px">🏛️ Department Performance</h3>
           <a href="departments.html" class="btn btn-outline btn-sm">View All →</a>
         </div>
         <div id="dept-progress"></div>
       </div>
-
-      <!-- Top teams table -->
       <div class="card">
-        <h3 class="text-gold mb-3" style="font-size:15px;">🏆 Top Performing Teams</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Team</th><th>Department</th><th>Collected</th><th>Achievement</th><th>Status</th></tr></thead>
-            <tbody id="teams-table"><tr><td colspan="6" class="text-center text-muted" style="padding:40px">Loading...</td></tr></tbody>
-          </table>
-        </div>
+        <h3 class="text-gold mb-3" style="font-size:14px">🏆 Top Teams</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Team</th><th>Department</th><th>Collected</th><th>Achievement</th><th>Status</th></tr></thead>
+          <tbody id="teams-tbody"></tbody>
+        </table></div>
       </div>
     </div>
   </div>
 </div>
 
-<script type="module">
-  import { db, auth, collection, getDocs, query, orderBy, onAuthStateChanged, initSidebar,
-           DEPARTMENTS_TEAMS, MONTHLY_TARGET, CURRENT_FY, FY_MONTHS, formatINR, achColor, achBadge, fyFilter }
-    from "./app.js";
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="common.js"></script>
+<script>
+var donations = [], charts = {};
 
-  let donations = [], allCharts = {};
-
-  async function init() {
-    const { isAdmin } = await initSidebar("dashboard.html");
-    if (isAdmin) document.getElementById("add-don-btn").classList.remove("hidden");
-
-    const [dSnap] = await Promise.all([
-      getDocs(query(collection(db, "donations"), orderBy("date","desc")))
-    ]);
-    donations = dSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    document.getElementById("fy-sel").addEventListener("change", render);
-    document.getElementById("month-sel").addEventListener("change", render);
+initPage("dashboard.html", function(info) {
+  if (info.isAdmin) document.getElementById("add-btn").classList.remove("hidden");
+  db.collection("donations").orderBy("date","desc").get().then(function(snap) {
+    donations = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
     render();
-  }
+  });
+});
 
-  function render() {
-    const fy    = document.getElementById("fy-sel").value;
-    const month = document.getElementById("month-sel").value;
-    const filtered = fyFilter(donations, fy, month);
-    const cash    = filtered.filter(d=>d.mode==="Cash");
-    const online  = filtered.filter(d=>d.mode==="Online");
-    const kind    = filtered.filter(d=>d.mode==="Kind");
-    const moneyOnly = filtered.filter(d=>d.mode!=="Kind");
-    const total   = moneyOnly.reduce((s,d)=>s+(d.amount||0),0);
+function render() {
+  var fy    = document.getElementById("fy-sel").value;
+  var month = document.getElementById("month-sel").value;
+  var filt  = fyFilter(donations, fy, month);
+  var money = filt.filter(function(d){ return d.mode!=="Kind"; });
+  var total = money.reduce(function(s,d){ return s+(d.amount||0); }, 0);
+  var cash  = filt.filter(function(d){ return d.mode==="Cash"; }).reduce(function(s,d){ return s+(d.amount||0); }, 0);
+  var online= filt.filter(function(d){ return d.mode==="Online"; }).reduce(function(s,d){ return s+(d.amount||0); }, 0);
+  var kind  = filt.filter(function(d){ return d.mode==="Kind"; }).length;
 
-    // Stats
-    document.getElementById("s-total").textContent  = formatINR(total);
-    document.getElementById("s-txn").textContent    = filtered.length;
-    document.getElementById("s-donors").textContent = new Set(filtered.map(d=>d.donorId)).size;
-    document.getElementById("s-kind").textContent   = kind.length;
+  document.getElementById("s-total").textContent  = formatINR(total);
+  document.getElementById("s-txn").textContent    = filt.length;
+  document.getElementById("s-donors").textContent = (new Set(filt.map(function(d){ return d.donorId; }))).size;
+  document.getElementById("s-kind").textContent   = kind;
 
-    // Monthly chart
-    const fyYear = parseInt(fy.split("-")[0]);
-    const monthLabels = FY_MONTHS.map(m=>m.label.slice(0,3));
-    const monthAmounts = FY_MONTHS.map(m => {
-      const y = m.month >= 4 ? fyYear : fyYear+1;
-      return donations.filter(d=>d.mode!=="Kind"&&d.date&&new Date(d.date).getMonth()+1===m.month&&new Date(d.date).getFullYear()===y)
-        .reduce((s,d)=>s+(d.amount||0),0);
+  // Monthly chart data
+  var fyYear = parseInt(fy.split("-")[0]);
+  var mLabels = FY_MONTHS.map(function(m){ return m.label.slice(0,3); });
+  var mAmts   = FY_MONTHS.map(function(m) {
+    var y = m.month>=4?fyYear:fyYear+1;
+    return donations.filter(function(d){
+      if(d.mode==="Kind"||!d.date) return false;
+      var dt=new Date(d.date); return dt.getMonth()+1===m.month && dt.getFullYear()===y;
+    }).reduce(function(s,d){ return s+(d.amount||0); }, 0);
+  });
+
+  // Bar chart
+  if(charts.bar) charts.bar.destroy();
+  var ctx1 = document.getElementById("monthly-chart").getContext("2d");
+  var grad = ctx1.createLinearGradient(0,0,0,180);
+  grad.addColorStop(0,"#FF6B00"); grad.addColorStop(1,"#D4A017");
+  charts.bar = new Chart(ctx1, {
+    type:"bar",
+    data:{ labels:mLabels, datasets:[{data:mAmts, backgroundColor:grad, borderRadius:4, borderSkipped:false}] },
+    options:{ responsive:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(v){ return formatINR(v.raw); }}}},
+      scales:{ x:{ticks:{color:"#997755",font:{size:11}},grid:{display:false}},
+               y:{ticks:{color:"#997755",font:{size:11},callback:function(v){ return v>=1000?"₹"+(v/1000)+"k":"₹"+v; }},grid:{color:"rgba(255,255,255,.04)"}} } }
+  });
+
+  // Pie chart
+  if(charts.pie) charts.pie.destroy();
+  var ctx2 = document.getElementById("mode-chart").getContext("2d");
+  charts.pie = new Chart(ctx2, {
+    type:"doughnut",
+    data:{ labels:["Cash","Online","Kind"], datasets:[{data:[cash,online,kind*500], backgroundColor:["#FF6B00","#D4A017","#22c55e"], borderColor:"#1A0F00", borderWidth:2}] },
+    options:{ responsive:true, plugins:{ legend:{position:"bottom",labels:{color:"#997755",font:{size:12},boxWidth:12}},
+      tooltip:{callbacks:{label:function(v){ return v.label+": "+(v.label==="Kind"?kind+" items":formatINR(v.raw)); }}} } }
+  });
+
+  // Dept progress
+  var mc = (month==="all"||!month)?12:1;
+  var deptHtml = Object.keys(DEPARTMENTS_TEAMS).map(function(dept) {
+    var teams = DEPARTMENTS_TEAMS[dept];
+    var tot = filt.filter(function(d){ return d.department===dept&&d.mode!=="Kind"; }).reduce(function(s,d){ return s+(d.amount||0); },0);
+    var tgt = teams.length * MONTHLY_TARGET * mc;
+    var pct = Math.min(100,Math.round(tot/tgt*100))||0;
+    var col = achColor(pct);
+    return '<div class="mb-3">' +
+      '<div class="flex justify-between items-center mb-1" style="gap:10px">' +
+        '<span class="font-bold" style="font-size:13px">'+dept+'</span>' +
+        '<div class="flex gap-3 items-center">' +
+          '<span class="text-muted text-sm">'+teams.length+' teams</span>' +
+          '<span style="font-weight:700;color:'+col+'">'+pct+'%</span>' +
+          '<span class="text-muted text-sm">'+formatINR(tot)+' / '+formatINR(tgt)+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="progress-wrap"><div class="progress-fill" style="width:'+pct+'%;background:'+col+'"></div></div>' +
+    '</div>';
+  }).join("");
+  document.getElementById("dept-progress").innerHTML = deptHtml;
+
+  // Teams table
+  var teamStats = [];
+  Object.keys(DEPARTMENTS_TEAMS).forEach(function(dept) {
+    DEPARTMENTS_TEAMS[dept].forEach(function(team) {
+      var td = filt.filter(function(d){ return d.team===team&&d.mode!=="Kind"; });
+      var tt = td.reduce(function(s,d){ return s+(d.amount||0); },0);
+      var tp = Math.min(100,Math.round(tt/(MONTHLY_TARGET*mc)*100))||0;
+      if(tt>0) teamStats.push({team:team,dept:dept,tt:tt,tp:tp});
     });
-    drawBar("monthly-chart", monthLabels, monthAmounts);
-
-    // Mode pie
-    const cashTotal   = cash.reduce((s,d)=>s+(d.amount||0),0);
-    const onlineTotal = online.reduce((s,d)=>s+(d.amount||0),0);
-    drawPie("mode-chart",
-      ["Cash","Online","Kind"],
-      [cashTotal, onlineTotal, kind.length * 500],
-      ["#FF6B00","#D4A017","#22c55e"]
-    );
-
-    // Department progress
-    const monthsCount = month === "all" ? 12 : 1;
-    const deptHtml = Object.keys(DEPARTMENTS_TEAMS).map(dept => {
-      const teams = DEPARTMENTS_TEAMS[dept];
-      const dTotal = filtered.filter(d=>d.department===dept&&d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
-      const dTarget= teams.length * MONTHLY_TARGET * monthsCount;
-      const pct    = Math.min(100, Math.round(dTotal/dTarget*100)) || 0;
-      const color  = achColor(pct);
-      return `
-        <div class="mb-3">
-          <div class="flex justify-between items-center mb-1" style="gap:12px">
-            <span class="font-bold" style="font-size:14px">${dept}</span>
-            <div class="flex gap-3 items-center">
-              <span class="text-muted text-sm">${teams.length} teams</span>
-              <span style="font-weight:700;color:${color}">${pct}%</span>
-              <span class="text-muted text-sm">${formatINR(dTotal)} / ${formatINR(dTarget)}</span>
-            </div>
-          </div>
-          <div class="progress-wrap">
-            <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
-          </div>
-        </div>`;
-    }).join("");
-    document.getElementById("dept-progress").innerHTML = deptHtml;
-
-    // Teams table
-    const teamStats = [];
-    Object.entries(DEPARTMENTS_TEAMS).forEach(([dept, teams]) => {
-      teams.forEach(team => {
-        const t = filtered.filter(d=>d.team===team&&d.mode!=="Kind");
-        const tTotal  = t.reduce((s,d)=>s+(d.amount||0),0);
-        const tTarget = MONTHLY_TARGET * monthsCount;
-        const pct     = Math.min(100, Math.round(tTotal/tTarget*100)) || 0;
-        if (tTotal > 0) teamStats.push({team,dept,tTotal,tTarget,pct});
-      });
-    });
-    teamStats.sort((a,b)=>b.tTotal-a.tTotal);
-
-    const medals = ["🥇","🥈","🥉"];
-    const tbody = teamStats.length === 0
-      ? `<tr><td colspan="6" class="text-center text-muted" style="padding:40px">No donations for selected period</td></tr>`
-      : teamStats.slice(0,12).map((t,i)=>`
-        <tr>
-          <td class="text-muted">${medals[i]||"#"+(i+1)}</td>
-          <td class="font-bold">${t.team}</td>
-          <td class="text-muted">${t.dept}</td>
-          <td class="text-gold font-bold">${formatINR(t.tTotal)}</td>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="progress-wrap" style="flex:1;max-width:80px">
-                <div class="progress-fill" style="width:${t.pct}%;background:${achColor(t.pct)}"></div>
-              </div>
-              <span style="font-weight:700;color:${achColor(t.pct)};font-size:13px">${t.pct}%</span>
-            </div>
-          </td>
-          <td>${achBadge(t.pct)}</td>
-        </tr>`).join("");
-    document.getElementById("teams-table").innerHTML = tbody;
-  }
-
-  function drawBar(id, labels, data) {
-    const ctx = document.getElementById(id).getContext("2d");
-    if (allCharts[id]) allCharts[id].destroy();
-    allCharts[id] = new Chart(ctx, {
-      type:"bar",
-      data:{ labels, datasets:[{ data, backgroundColor: ctx => {
-        const g = ctx.chart.ctx.createLinearGradient(0,0,0,200);
-        g.addColorStop(0,"#FF6B00"); g.addColorStop(1,"#D4A017");
-        return g;
-      }, borderRadius:4, borderSkipped:false }]},
-      options:{ responsive:true, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:v=>formatINR(v.raw)}} },
-        scales:{
-          x:{ ticks:{color:"#997755",font:{size:11}}, grid:{display:false} },
-          y:{ ticks:{color:"#997755",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`}, grid:{color:"rgba(255,255,255,.04)"} }
-        }}
-    });
-  }
-
-  function drawPie(id, labels, data, colors) {
-    const ctx = document.getElementById(id).getContext("2d");
-    if (allCharts[id]) allCharts[id].destroy();
-    allCharts[id] = new Chart(ctx, {
-      type:"doughnut",
-      data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:"#1A0F00", borderWidth:2 }]},
-      options:{ responsive:true, plugins:{
-        legend:{ position:"bottom", labels:{color:"#997755",font:{size:12},boxWidth:12} },
-        tooltip:{ callbacks:{label:v=>v.label+": "+formatINR(v.raw)} }
-      }}
-    });
-  }
-
-  init();
+  });
+  teamStats.sort(function(a,b){ return b.tt-a.tt; });
+  var medals = ["🥇","🥈","🥉"];
+  document.getElementById("teams-tbody").innerHTML = teamStats.length ? teamStats.slice(0,12).map(function(t,i) {
+    return '<tr>' +
+      '<td class="text-muted">'+(medals[i]||"#"+(i+1))+'</td>' +
+      '<td class="font-bold">'+t.team+'</td>' +
+      '<td class="text-muted">'+t.dept+'</td>' +
+      '<td class="text-gold font-bold">'+formatINR(t.tt)+'</td>' +
+      '<td><div class="flex items-center gap-2"><div class="progress-wrap" style="flex:1;max-width:80px"><div class="progress-fill" style="width:'+t.tp+'%;background:'+achColor(t.tp)+'"></div></div><span style="font-weight:700;color:'+achColor(t.tp)+';font-size:12px">'+t.tp+'%</span></div></td>' +
+      '<td>'+achBadge(t.tp)+'</td>' +
+    '</tr>';
+  }).join("") : '<tr><td colspan="6" class="text-center text-muted" style="padding:40px">No donations for selected period</td></tr>';
+}
 </script>
 </body>
 </html>
