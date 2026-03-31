@@ -6,6 +6,69 @@
   <title>Dashboard — IGC Sudama Sewa</title>
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Hero banner */
+    .hero {
+      background: linear-gradient(135deg, #0F2D5A 0%, #1E40AF 50%, #6366F1 100%);
+      padding: 28px 28px 80px;
+      position: relative; overflow: hidden;
+      margin-bottom: -60px;
+    }
+    .hero::before {
+      content:'';
+      position:absolute; inset:0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero::after {
+      content:'🪷';
+      position:absolute; right:40px; top:50%; transform:translateY(-50%);
+      font-size:120px; opacity:.06;
+      pointer-events:none;
+    }
+    .hero-title { font-family:'Sora',sans-serif; color:#fff; font-size:22px; font-weight:700; }
+    .hero-sub { color:rgba(255,255,255,.6); font-size:13px; margin-top:4px; }
+    .hero-controls { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+    .hero-select {
+      background:rgba(255,255,255,.12); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.2); color:#fff;
+      padding:8px 14px; border-radius:9px;
+      font-family:'Plus Jakarta Sans',sans-serif; font-size:13px;
+      cursor:pointer;
+    }
+    .hero-select option { background:#1E3A6E; color:#fff; }
+    .hero-btn {
+      background:rgba(255,255,255,.15); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.25); color:#fff;
+      padding:8px 18px; border-radius:9px;
+      font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:600;
+      cursor:pointer; transition:all .2s; text-decoration:none;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .hero-btn:hover { background:rgba(255,255,255,.25); }
+    .hero-btn.primary {
+      background:rgba(255,255,255,.95); color:var(--blue-dark);
+    }
+    .hero-btn.primary:hover { background:#fff; }
+
+    /* Stat cards float over hero */
+    .stats-float { padding: 0 28px; position:relative; z-index:5; margin-bottom:24px; }
+
+    /* Chart cards */
+    .chart-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:20px; margin-bottom:24px; }
+    @media(max-width:900px){ .chart-grid{ grid-template-columns:1fr; } }
+
+    /* Dept item */
+    .dept-item { margin-bottom:14px; }
+    .dept-row  { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .dept-name { font-weight:600; font-size:14px; }
+    .dept-meta { display:flex; gap:14px; align-items:center; font-size:13px; }
+
+    /* Team table row hover */
+    .teams-table tr:hover td { background:var(--blue-xpale); }
+
+    /* Rank badge */
+    .rank { font-size:18px; }
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -15,76 +78,99 @@
     <!-- Mobile bar -->
     <div class="mobile-bar">
       <button class="hamburger" id="hamburger">☰</button>
-      <span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span>
+      <span class="font-sora" style="font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">IGC Sudama Sewa</span>
     </div>
 
-    <div class="page-header">
-      <div style="flex:1">
-        <h2 class="text-gold" style="font-size:19px;">📊 Dashboard</h2>
-        <p class="text-muted text-sm mt-1">IGC Sudama Sewa — Donation Overview</p>
-      </div>
-      <div class="flex gap-2" style="flex-wrap:wrap;">
-        <select class="form-select" style="width:auto" id="fy-sel">
-          <option value="2024-25">FY 2024-25</option>
-          <option value="2025-26" selected>FY 2025-26</option>
-          <option value="2026-27">FY 2026-27</option>
-        </select>
-        <select class="form-select" style="width:auto" id="month-sel">
-          <option value="all">All Months</option>
-          <option value="4">April</option><option value="5">May</option>
-          <option value="6">June</option><option value="7">July</option>
-          <option value="8">August</option><option value="9">September</option>
-          <option value="10">October</option><option value="11">November</option>
-          <option value="12">December</option><option value="1">January</option>
-          <option value="2">February</option><option value="3">March</option>
-        </select>
-        <button class="btn btn-primary hidden" id="add-don-btn" onclick="window.location.href='donations.html'">
-          ➕ Add Donation
-        </button>
+    <!-- Hero Banner -->
+    <div class="hero">
+      <div style="position:relative;z-index:2">
+        <div class="hero-title">📊 Dashboard</div>
+        <div class="hero-sub">IGC Sudama Sewa — Donation Overview</div>
+        <div class="hero-controls">
+          <select class="hero-select" id="fy-sel" onchange="render()">
+            <option value="2024-25">FY 2024-25</option>
+            <option value="2025-26" selected>FY 2025-26</option>
+            <option value="2026-27">FY 2026-27</option>
+          </select>
+          <select class="hero-select" id="month-sel" onchange="render()">
+            <option value="all">All Months</option>
+            <option value="4">April</option><option value="5">May</option>
+            <option value="6">June</option><option value="7">July</option>
+            <option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option>
+            <option value="12">December</option><option value="1">January</option>
+            <option value="2">February</option><option value="3">March</option>
+          </select>
+          <button class="hero-btn primary hidden" id="add-btn" onclick="window.location.href='donations.html'">
+            ➕ Add Donation
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="page-body">
-      <!-- Stats -->
-      <div class="grid-4 mb-3" id="stats-row">
-        <div class="stat-card orange"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Collections</div><div class="stat-icon">💰</div></div>
-        <div class="stat-card gold"><div class="stat-value" id="s-txn">—</div><div class="stat-label">Transactions</div><div class="stat-icon">📋</div></div>
-        <div class="stat-card green"><div class="stat-value" id="s-donors">—</div><div class="stat-label">Active Donors</div><div class="stat-icon">👥</div></div>
-        <div class="stat-card red"><div class="stat-value" id="s-kind">—</div><div class="stat-label">Kind Donations</div><div class="stat-icon">🎁</div></div>
+    <!-- Floating stat cards -->
+    <div class="stats-float">
+      <div class="grid-4">
+        <div class="stat-card blue">
+          <div class="stat-value" id="s-total">—</div>
+          <div class="stat-label">Total Collections</div>
+          <div class="stat-icon">💰</div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="stat-value" id="s-txn">—</div>
+          <div class="stat-label">Transactions</div>
+          <div class="stat-icon">📋</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-value" id="s-donors">—</div>
+          <div class="stat-label">Active Donors</div>
+          <div class="stat-icon">👥</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-value" id="s-kind">—</div>
+          <div class="stat-label">Kind Donations</div>
+          <div class="stat-icon">🎁</div>
+        </div>
       </div>
+    </div>
 
+    <div class="page-body" style="padding-top:0">
       <!-- Charts -->
-      <div class="grid-2 mb-3">
+      <div class="chart-grid">
         <div class="card card-gold">
-          <h3 class="text-gold mb-3" style="font-size:14px;">📈 Monthly Collection Trend</h3>
-          <div style="position:relative;height:220px">
+          <div class="section-title mb-3">📈 Monthly Collection Trend</div>
+          <div style="position:relative;height:230px">
             <canvas id="monthly-chart"></canvas>
           </div>
         </div>
         <div class="card card-gold">
-          <h3 class="text-gold mb-3" style="font-size:14px;">🥧 Payment Mode</h3>
-          <div style="position:relative;height:220px">
+          <div class="section-title mb-3">🥧 Payment Mode</div>
+          <div style="position:relative;height:230px">
             <canvas id="mode-chart"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- Department progress -->
+      <!-- Department Performance -->
       <div class="card mb-3">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-gold" style="font-size:15px;">🏛️ Department Performance</h3>
+          <div class="section-title">🏛️ Department Performance</div>
           <a href="departments.html" class="btn btn-outline btn-sm">View All →</a>
         </div>
         <div id="dept-progress"></div>
       </div>
 
-      <!-- Top teams table -->
+      <!-- Top Teams -->
       <div class="card">
-        <h3 class="text-gold mb-3" style="font-size:15px;">🏆 Top Performing Teams</h3>
+        <div class="section-title mb-3">🏆 Top Performing Teams</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Team</th><th>Department</th><th>Collected</th><th>Achievement</th><th>Status</th></tr></thead>
-            <tbody id="teams-table"><tr><td colspan="6" class="text-center text-muted" style="padding:40px">Loading...</td></tr></tbody>
+            <thead>
+              <tr><th>#</th><th>Team</th><th>Department</th><th>Collected</th><th>Achievement</th><th>Status</th></tr>
+            </thead>
+            <tbody id="teams-table">
+              <tr><td colspan="6" class="text-center text-muted" style="padding:40px">Loading...</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -93,145 +179,157 @@
 </div>
 
 <script type="module">
-  import { db, auth, collection, getDocs, query, orderBy, onAuthStateChanged, initSidebar,
-           DEPARTMENTS_TEAMS, MONTHLY_TARGET, CURRENT_FY, FY_MONTHS, formatINR, achColor, achBadge, fyFilter }
+  import { db, collection, getDocs, query, orderBy, initSidebar,
+           DEPARTMENTS_TEAMS, MONTHLY_TARGET, FY_MONTHS,
+           formatINR, achColor, achBadge, fyFilter }
     from "./common.js";
 
   let donations = [], allCharts = {};
 
   async function init() {
     const { isAdmin } = await initSidebar("dashboard.html");
-    if (isAdmin) document.getElementById("add-don-btn").classList.remove("hidden");
+    if (isAdmin) document.getElementById("add-btn").classList.remove("hidden");
 
-    const [dSnap] = await Promise.all([
-      getDocs(query(collection(db, "donations"), orderBy("date","desc")))
-    ]);
-    donations = dSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    document.getElementById("fy-sel").addEventListener("change", render);
-    document.getElementById("month-sel").addEventListener("change", render);
+    const snap = await getDocs(query(collection(db, "donations"), orderBy("date","desc")));
+    donations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
   }
 
-  function render() {
+  window.render = () => {
     const fy    = document.getElementById("fy-sel").value;
     const month = document.getElementById("month-sel").value;
-    const filtered = fyFilter(donations, fy, month);
-    const cash    = filtered.filter(d=>d.mode==="Cash");
-    const online  = filtered.filter(d=>d.mode==="Online");
-    const kind    = filtered.filter(d=>d.mode==="Kind");
-    const moneyOnly = filtered.filter(d=>d.mode!=="Kind");
-    const total   = moneyOnly.reduce((s,d)=>s+(d.amount||0),0);
-
-    // Stats
-    document.getElementById("s-total").textContent  = formatINR(total);
-    document.getElementById("s-txn").textContent    = filtered.length;
-    document.getElementById("s-donors").textContent = new Set(filtered.map(d=>d.donorId)).size;
-    document.getElementById("s-kind").textContent   = kind.length;
-
-    // Monthly chart
+    const filt  = fyFilter(donations, fy, month);
     const fyYear = parseInt(fy.split("-")[0]);
-    const monthLabels = FY_MONTHS.map(m=>m.label.slice(0,3));
-    const monthAmounts = FY_MONTHS.map(m => {
-      const y = m.month >= 4 ? fyYear : fyYear+1;
-      return donations.filter(d=>d.mode!=="Kind"&&d.date&&new Date(d.date).getMonth()+1===m.month&&new Date(d.date).getFullYear()===y)
-        .reduce((s,d)=>s+(d.amount||0),0);
+    const mc    = month === "all" ? 12 : 1;
+
+    const moneyDons = filt.filter(d => d.mode !== "Kind");
+    const total   = moneyDons.reduce((s,d) => s+(d.amount||0), 0);
+    const kindCnt = filt.filter(d => d.mode === "Kind").length;
+
+    document.getElementById("s-total").textContent   = formatINR(total);
+    document.getElementById("s-txn").textContent     = filt.length;
+    document.getElementById("s-donors").textContent  = new Set(filt.map(d=>d.donorId).filter(Boolean)).size;
+    document.getElementById("s-kind").textContent    = kindCnt;
+
+    // Monthly bar chart
+    const mLabels = FY_MONTHS.map(m => m.label.slice(0,3));
+    const mAmts   = FY_MONTHS.map(m => {
+      const y = m.month >= 4 ? fyYear : fyYear + 1;
+      return donations.filter(d => d.mode!=="Kind" && d.date &&
+        new Date(d.date).getMonth()+1 === m.month &&
+        new Date(d.date).getFullYear() === y
+      ).reduce((s,d) => s+(d.amount||0), 0);
     });
-    drawBar("monthly-chart", monthLabels, monthAmounts);
 
-    // Mode pie
-    const cashTotal   = cash.reduce((s,d)=>s+(d.amount||0),0);
-    const onlineTotal = online.reduce((s,d)=>s+(d.amount||0),0);
-    drawPie("mode-chart",
-      ["Cash","Online","Kind"],
-      [cashTotal, onlineTotal, kind.length * 500],
-      ["#FF6B00","#D4A017","#22c55e"]
-    );
+    drawBar("monthly-chart", mLabels, mAmts);
 
-    // Department progress
-    const monthsCount = month === "all" ? 12 : 1;
-    const deptHtml = Object.keys(DEPARTMENTS_TEAMS).map(dept => {
+    // Payment mode doughnut
+    const cash   = filt.filter(d=>d.mode==="Cash").reduce((s,d)=>s+(d.amount||0),0);
+    const online = filt.filter(d=>d.mode==="Online").reduce((s,d)=>s+(d.amount||0),0);
+    const kindVal= kindCnt * 500;
+    if (cash+online+kindVal > 0) {
+      drawPie("mode-chart", ["Cash","Online","Kind"], [cash,online,kindVal], ["#3B82F6","#6366F1","#10B981"]);
+    } else {
+      drawPie("mode-chart", ["No Data"], [1], ["#E2E8F0"]);
+    }
+
+    // Dept progress
+    document.getElementById("dept-progress").innerHTML = Object.keys(DEPARTMENTS_TEAMS).map(dept => {
       const teams = DEPARTMENTS_TEAMS[dept];
-      const dTotal = filtered.filter(d=>d.department===dept&&d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
-      const dTarget= teams.length * MONTHLY_TARGET * monthsCount;
-      const pct    = Math.min(100, Math.round(dTotal/dTarget*100)) || 0;
-      const color  = achColor(pct);
+      const tot = filt.filter(d=>d.department===dept&&d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
+      const tgt = teams.length * MONTHLY_TARGET * mc;
+      const pct = Math.min(100, Math.round(tot/tgt*100))||0;
+      const col = achColor(pct);
       return `
-        <div class="mb-3">
-          <div class="flex justify-between items-center mb-1" style="gap:12px">
-            <span class="font-bold" style="font-size:14px">${dept}</span>
-            <div class="flex gap-3 items-center">
-              <span class="text-muted text-sm">${teams.length} teams</span>
-              <span style="font-weight:700;color:${color}">${pct}%</span>
-              <span class="text-muted text-sm">${formatINR(dTotal)} / ${formatINR(dTarget)}</span>
+        <div class="dept-item">
+          <div class="dept-row">
+            <span class="dept-name">${dept}</span>
+            <div class="dept-meta">
+              <span class="text-muted">${teams.length} teams</span>
+              <span style="font-weight:700;color:${col};font-size:14px">${pct}%</span>
+              <span class="text-muted">${formatINR(tot)} / ${formatINR(tgt)}</span>
             </div>
           </div>
           <div class="progress-wrap">
-            <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+            <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${col},${col}bb)"></div>
           </div>
         </div>`;
     }).join("");
-    document.getElementById("dept-progress").innerHTML = deptHtml;
 
     // Teams table
     const teamStats = [];
-    Object.entries(DEPARTMENTS_TEAMS).forEach(([dept, teams]) => {
+    Object.entries(DEPARTMENTS_TEAMS).forEach(([dept,teams]) => {
       teams.forEach(team => {
-        const t = filtered.filter(d=>d.team===team&&d.mode!=="Kind");
-        const tTotal  = t.reduce((s,d)=>s+(d.amount||0),0);
-        const tTarget = MONTHLY_TARGET * monthsCount;
-        const pct     = Math.min(100, Math.round(tTotal/tTarget*100)) || 0;
-        if (tTotal > 0) teamStats.push({team,dept,tTotal,tTarget,pct});
+        const td = filt.filter(d=>d.team===team&&d.mode!=="Kind");
+        const tt = td.reduce((s,d)=>s+(d.amount||0),0);
+        const tp = Math.min(100,Math.round(tt/(MONTHLY_TARGET*mc)*100))||0;
+        if (tt>0) teamStats.push({team,dept,tt,tp});
       });
     });
-    teamStats.sort((a,b)=>b.tTotal-a.tTotal);
+    teamStats.sort((a,b)=>b.tt-a.tt);
+    const medals=["🥇","🥈","🥉"];
 
-    const medals = ["🥇","🥈","🥉"];
-    const tbody = teamStats.length === 0
-      ? `<tr><td colspan="6" class="text-center text-muted" style="padding:40px">No donations for selected period</td></tr>`
-      : teamStats.slice(0,12).map((t,i)=>`
-        <tr>
-          <td class="text-muted">${medals[i]||"#"+(i+1)}</td>
-          <td class="font-bold">${t.team}</td>
-          <td class="text-muted">${t.dept}</td>
-          <td class="text-gold font-bold">${formatINR(t.tTotal)}</td>
-          <td>
-            <div class="flex items-center gap-2">
-              <div class="progress-wrap" style="flex:1;max-width:80px">
-                <div class="progress-fill" style="width:${t.pct}%;background:${achColor(t.pct)}"></div>
+    document.getElementById("teams-table").innerHTML = teamStats.length
+      ? teamStats.slice(0,10).map((t,i)=>`
+          <tr>
+            <td class="rank">${medals[i]||"#"+(i+1)}</td>
+            <td class="font-bold">${t.team}</td>
+            <td class="text-muted">${t.dept}</td>
+            <td style="color:var(--blue);font-weight:700">${formatINR(t.tt)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress-wrap" style="width:80px">
+                  <div class="progress-fill" style="width:${t.tp}%;background:${achColor(t.tp)}"></div>
+                </div>
+                <span style="font-weight:700;font-size:13px;color:${achColor(t.tp)}">${t.tp}%</span>
               </div>
-              <span style="font-weight:700;color:${achColor(t.pct)};font-size:13px">${t.pct}%</span>
-            </div>
-          </td>
-          <td>${achBadge(t.pct)}</td>
-        </tr>`).join("");
-    document.getElementById("teams-table").innerHTML = tbody;
-  }
+            </td>
+            <td>${achBadge(t.tp)}</td>
+          </tr>`)
+        .join("")
+      : `<tr><td colspan="6" class="text-center text-muted" style="padding:40px">
+          Koi donations nahi hain selected period mein
+         </td></tr>`;
+  };
 
   function drawBar(id, labels, data) {
     const ctx = document.getElementById(id).getContext("2d");
     if (allCharts[id]) allCharts[id].destroy();
-    allCharts[id] = new Chart(ctx, {
+    const grad = ctx.createLinearGradient(0,0,0,220);
+    grad.addColorStop(0,"rgba(99,102,241,.9)");
+    grad.addColorStop(1,"rgba(59,130,246,.6)");
+    allCharts[id] = new Chart(ctx,{
       type:"bar",
-      data:{ labels, datasets:[{ data, backgroundColor:"#3B82F6", borderRadius:4, borderSkipped:false }]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:v=>formatINR(v.raw)}} },
+      data:{ labels, datasets:[{ data, backgroundColor:grad, borderRadius:6, borderSkipped:false }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{label:v=>formatINR(v.raw)},
+          backgroundColor:"rgba(15,23,42,.85)", titleColor:"#fff", bodyColor:"#94A3B8",
+          padding:10, cornerRadius:8 }},
         scales:{
           x:{ ticks:{color:"#94A3B8",font:{size:11}}, grid:{display:false} },
-          y:{ ticks:{color:"#94A3B8",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`}, grid:{color:"rgba(0,0,0,.04)"} }
-        }}
+          y:{ ticks:{color:"#94A3B8",font:{size:11},callback:v=>v>=1000?`₹${v/1000}k`:`₹${v}`},
+              grid:{color:"rgba(226,232,240,.5)"} }
+        }
+      }
     });
   }
 
   function drawPie(id, labels, data, colors) {
     const ctx = document.getElementById(id).getContext("2d");
     if (allCharts[id]) allCharts[id].destroy();
-    allCharts[id] = new Chart(ctx, {
+    allCharts[id] = new Chart(ctx,{
       type:"doughnut",
-      data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:"#fff", borderWidth:2 }]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{
-        legend:{ position:"bottom", labels:{color:"#64748B",font:{size:12},boxWidth:12} },
-        tooltip:{ callbacks:{label:v=>v.label+": "+formatINR(v.raw)} }
-      }}
+      data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:"rgba(255,255,255,.8)", borderWidth:3, hoverOffset:6 }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:"bottom", labels:{color:"#64748B",font:{size:12},boxWidth:12,padding:16} },
+          tooltip:{ callbacks:{label:v=>v.label+": "+formatINR(v.raw)},
+            backgroundColor:"rgba(15,23,42,.85)", padding:10, cornerRadius:8 }
+        },
+        cutout:"68%"
+      }
     });
   }
 
