@@ -12,12 +12,12 @@
   <div class="main">
     <div class="mobile-bar">
       <button class="hamburger" id="hamburger">☰</button>
-      <span class="font-cinzel text-gold" style="font-size:14px;">IGC Sudama Sewa</span>
+      <span class="font-sora text-gold" style="font-size:14px;">IGC Sudama Sewa</span>
     </div>
 
     <div class="page-header">
       <div style="flex:1">
-        <h2 class="text-gold" style="font-size:19px;">💰 Donations</h2>
+        <h2 style="font-size:19px;color:var(--blue-dark);">💰 Donations</h2>
         <p class="text-muted text-sm mt-1" id="summary-text">Loading...</p>
       </div>
       <button class="btn btn-primary hidden" id="add-btn" onclick="openModal()">➕ Add Donation</button>
@@ -67,7 +67,7 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Add/Edit Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -76,10 +76,14 @@
     </div>
 
     <input type="hidden" id="edit-id"/>
+    <input type="hidden" id="selected-donor-id"/>
+    <input type="hidden" id="selected-donor-name"/>
 
+    <!-- Donor search -->
     <div class="form-group" style="position:relative">
       <label class="form-label">Donor Name *</label>
-      <input class="form-input" id="f-donor" placeholder="Search donor..." autocomplete="off" oninput="searchDonor(this.value)"/>
+      <input class="form-input" id="f-donor-search" placeholder="Type to search donor..." autocomplete="off"
+             oninput="handleDonorSearch(this.value)"/>
       <div class="autocomplete-box hidden" id="donor-ac"></div>
     </div>
 
@@ -144,16 +148,17 @@
            buildTeamOptions, formatINR, fyFilter, toast }
     from "./common.js";
 
-  let donations=[], donors=[], isAdmin=false;
+  let donations = [], donors = [], isAdmin = false;
 
+  // ── Init ──────────────────────────────────────────────────────────
   async function init() {
     const info = await initSidebar("donations.html");
     isAdmin = info.isAdmin;
 
-    // Build dept filter
+    // Build dept filter dropdown
     document.getElementById("f-dept").innerHTML =
       `<option value="">All Departments</option>` +
-      Object.keys(DEPARTMENTS_TEAMS).map(d=>`<option value="${d}">${d}</option>`).join("");
+      Object.keys(DEPARTMENTS_TEAMS).map(d => `<option value="${d}">${d}</option>`).join("");
 
     // Build dept in modal
     document.getElementById("f-dep").innerHTML = buildDeptOptions();
@@ -164,15 +169,15 @@
     }
 
     const [dSnap, donorSnap] = await Promise.all([
-      getDocs(query(collection(db,"donations"), orderBy("date","desc"))),
-      getDocs(collection(db,"donors"))
+      getDocs(query(collection(db, "donations"), orderBy("date", "desc"))),
+      getDocs(collection(db, "donors"))
     ]);
-    donations = dSnap.docs.map(d=>({id:d.id,...d.data()}));
-    donors    = donorSnap.docs.map(d=>({id:d.id,...d.data()}));
-    window.donors = donors;
+    donations = dSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    donors    = donorSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
   }
 
+  // ── Render table ──────────────────────────────────────────────────
   window.render = () => {
     const search = document.getElementById("search").value.toLowerCase();
     const fy     = document.getElementById("f-fy").value;
@@ -181,60 +186,69 @@
 
     const filtered = fyFilter(donations, fy, month).filter(d => {
       const mSearch = !search ||
-        (d.donorName||"").toLowerCase().includes(search) ||
-        (d.team||"").toLowerCase().includes(search) ||
-        (d.department||"").toLowerCase().includes(search);
+        (d.donorName || "").toLowerCase().includes(search) ||
+        (d.team || "").toLowerCase().includes(search) ||
+        (d.department || "").toLowerCase().includes(search);
       const mDept = !dept || d.department === dept;
       return mSearch && mDept;
     });
 
-    const total = filtered.filter(d=>d.mode!=="Kind").reduce((s,d)=>s+(d.amount||0),0);
+    const total = filtered.filter(d => d.mode !== "Kind").reduce((s, d) => s + (d.amount || 0), 0);
     document.getElementById("summary-text").textContent =
       `${filtered.length} entries · Total: ${formatINR(total)}`;
 
-    const rows = filtered.map((d,i) => {
-      const modeBadge = d.mode==="Cash"
-        ? `<span class="badge badge-saffron">💵 Cash</span>`
-        : d.mode==="Online"
-        ? `<span class="badge badge-gold">📱 Online</span>`
+    const rows = filtered.map((d, i) => {
+      const modeBadge = d.mode === "Cash"
+        ? `<span class="badge badge-blue">💵 Cash</span>`
+        : d.mode === "Online"
+        ? `<span class="badge badge-cyan">📱 Online</span>`
         : `<span class="badge badge-success">🎁 Kind</span>`;
-      const amt = d.mode==="Kind" ? `<span class="text-success">Kind</span>`
-                                  : `<span class="text-gold font-bold">${formatINR(d.amount)}</span>`;
+      const amt = d.mode === "Kind"
+        ? `<span class="text-success font-bold">Kind</span>`
+        : `<span style="color:var(--blue);font-weight:700">${formatINR(d.amount)}</span>`;
       const acts = isAdmin
         ? `<td><div class="flex gap-2">
-            <button class="btn btn-outline btn-sm" onclick='editDon(${JSON.stringify(d)})'>✏️</button>
+            <button class="btn btn-outline btn-sm" onclick="editDon('${d.id}')">✏️</button>
             <button class="btn btn-danger btn-sm" onclick="delDon('${d.id}')">🗑️</button>
            </div></td>`
         : "";
       return `<tr>
-        <td class="text-muted">${i+1}</td>
-        <td class="text-muted">${d.date||""}</td>
-        <td class="font-bold">${d.donorName||""}</td>
-        <td>${d.department||""}</td>
-        <td class="text-muted">${d.team||""}</td>
+        <td class="text-muted">${i + 1}</td>
+        <td class="text-muted">${d.date || ""}</td>
+        <td class="font-bold">${d.donorName || "<span class='text-danger'>Unknown</span>"}</td>
+        <td>${d.department || ""}</td>
+        <td class="text-muted">${d.team || ""}</td>
         <td>${modeBadge}</td>
         <td>${amt}</td>
-        <td class="text-muted text-sm">${d.remarks||"-"}</td>
+        <td class="text-muted text-sm">${d.remarks || "-"}</td>
         ${acts}
       </tr>`;
     }).join("");
 
     document.getElementById("don-tbody").innerHTML = rows ||
-      `<tr><td colspan="${isAdmin?9:8}" class="text-center text-muted" style="padding:40px">No donations found</td></tr>`;
+      `<tr><td colspan="${isAdmin ? 9 : 8}" class="text-center text-muted" style="padding:40px">
+        No donations found
+       </td></tr>`;
   };
 
+  // ── Modal open/close ──────────────────────────────────────────────
   window.openModal = () => {
     document.getElementById("edit-id").value = "";
+    document.getElementById("selected-donor-id").value = "";
+    document.getElementById("selected-donor-name").value = "";
     document.getElementById("modal-title").textContent = "➕ Add Donation";
-    document.getElementById("f-donor").value = "";
-    document.getElementById("f-dep").value   = "";
+    document.getElementById("save-btn").textContent = "➕ Save";
+    document.getElementById("f-donor-search").value = "";
+    document.getElementById("f-dep").value = "";
+    document.getElementById("f-dep").innerHTML = buildDeptOptions();
     document.getElementById("f-team").innerHTML = buildTeamOptions("");
-    document.getElementById("f-mode").value  = "Cash";
+    document.getElementById("f-mode").value = "Cash";
     document.getElementById("f-amount").value = "";
     document.getElementById("f-amount").disabled = false;
-    document.getElementById("f-date").value  = new Date().toISOString().split("T")[0];
-    document.getElementById("f-fy2").value   = "2025-26";
+    document.getElementById("f-date").value = new Date().toISOString().split("T")[0];
+    document.getElementById("f-fy2").value = "2025-26";
     document.getElementById("f-remarks").value = "";
+    document.getElementById("donor-ac").classList.add("hidden");
     document.getElementById("modal").classList.add("show");
   };
 
@@ -243,127 +257,168 @@
     document.getElementById("donor-ac").classList.add("hidden");
   };
 
+  // ── Donor autocomplete ────────────────────────────────────────────
+  // Store matched donors in a module-level array (NOT on window)
+  let _acDonors = [];
+
+  window.handleDonorSearch = (val) => {
+    // Clear hidden selected donor when user types
+    document.getElementById("selected-donor-id").value = "";
+    document.getElementById("selected-donor-name").value = "";
+
+    const ac = document.getElementById("donor-ac");
+    if (val.length < 2) { ac.classList.add("hidden"); return; }
+
+    _acDonors = donors.filter(d =>
+      (d.name || "").toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 8);
+
+    if (!_acDonors.length) { ac.classList.add("hidden"); return; }
+
+    ac.innerHTML = _acDonors.map((d, i) => `
+      <div class="autocomplete-item" onclick="pickDonor(${i})">
+        <div class="ac-name">${d.name}</div>
+        <div class="ac-sub">${d.department || ""} · ${d.team || ""}</div>
+      </div>`).join("");
+    ac.classList.remove("hidden");
+  };
+
+  // ── THIS is the key fix — store name in hidden field immediately ──
+  window.pickDonor = (i) => {
+    const d = _acDonors[i];
+    if (!d) return;
+
+    const donorName = d.name || "";  // safe fallback
+
+    // Store in hidden fields — these are what saveDonation() will read
+    document.getElementById("selected-donor-id").value   = d.id || "";
+    document.getElementById("selected-donor-name").value = donorName;
+
+    // Show in visible search input
+    document.getElementById("f-donor-search").value = donorName;
+
+    // Auto-fill department & team
+    if (d.department) {
+      document.getElementById("f-dep").value = d.department;
+      document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team || "");
+    }
+
+    // Auto-fill amount if regular donor
+    if (d.defaultAmount > 0) {
+      document.getElementById("f-amount").value = d.defaultAmount;
+    }
+
+    document.getElementById("donor-ac").classList.add("hidden");
+  };
+
+  // ── Team dropdown update ──────────────────────────────────────────
   window.updateTeams = () => {
     const dept = document.getElementById("f-dep").value;
     document.getElementById("f-team").innerHTML = buildTeamOptions(dept);
   };
 
+  // ── Toggle amount for Kind ────────────────────────────────────────
   window.toggleAmount = () => {
     const mode = document.getElementById("f-mode").value;
     document.getElementById("f-amount").disabled = (mode === "Kind");
-    document.getElementById("amt-label").textContent = mode === "Kind" ? "Amount (N/A)" : "Amount (₹) *";
-    document.getElementById("rem-label").textContent = mode === "Kind" ? "Remarks (Item, Qty) *" : "Remarks";
+    document.getElementById("amt-label").textContent  = mode === "Kind" ? "Amount (N/A)" : "Amount (₹) *";
+    document.getElementById("rem-label").textContent  = mode === "Kind" ? "Remarks (Item & Qty) *" : "Remarks";
   };
 
-  window._acMatches = [];
-  window.searchDonor = (val) => {
-    const ac = document.getElementById("donor-ac");
-    if (val.length < 2) { ac.classList.add("hidden"); return; }
-    window._acMatches = donors.filter(d=>(d.name||"").toLowerCase().includes(val.toLowerCase())).slice(0,6);
-    if (!window._acMatches.length) { ac.classList.add("hidden"); return; }
-    ac.innerHTML = window._acMatches.map((d,i)=>`
-      <div class="autocomplete-item" onclick="selectDonor(${i})">
-        <div class="ac-name">${d.name}</div>
-        <div class="ac-sub">${d.department||""} · ${d.team||""}</div>
-      </div>`).join("");
-    ac.classList.remove("hidden");
-  };
-
-  window.selectDonor = (i) => {
-    const d = window._acMatches[i];
-    if (!d) return;
-    document.getElementById("f-donor").value = d.name;
-    document.getElementById("f-donor").dataset.id = d.id;
-    if (d.department) {
-      document.getElementById("f-dep").value = d.department;
-      document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
-    }
-    if (d.defaultAmount) document.getElementById("f-amount").value = d.defaultAmount;
-    document.getElementById("donor-ac").classList.add("hidden");
-  };
-
-  window.selectDonor = (d) => {
-    document.getElementById("f-donor").value = d.name;
-    document.getElementById("f-donor").dataset.id = d.id;
-    if (d.department) {
-      document.getElementById("f-dep").value = d.department;
-      document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
-    }
-    if (d.defaultAmount) document.getElementById("f-amount").value = d.defaultAmount;
-    document.getElementById("donor-ac").classList.add("hidden");
-  };
-
-  window.editDon = (d) => {
-    document.getElementById("edit-id").value = d.id;
-    document.getElementById("modal-title").textContent = "✏️ Edit Donation";
-    document.getElementById("f-donor").value = d.donorName || "";
-    document.getElementById("f-donor").dataset.id = d.donorId || "";
-    document.getElementById("f-dep").value = d.department || "";
-    document.getElementById("f-team").innerHTML = buildTeamOptions(d.department, d.team);
-    document.getElementById("f-mode").value  = d.mode || "Cash";
-    document.getElementById("f-amount").value = d.amount || "";
-    document.getElementById("f-amount").disabled = d.mode === "Kind";
-    document.getElementById("f-date").value  = d.date || "";
-    document.getElementById("f-fy2").value   = d.fy || "2025-26";
-    document.getElementById("f-remarks").value = d.remarks || "";
-    document.getElementById("modal").classList.add("show");
-  };
-
+  // ── Save donation ─────────────────────────────────────────────────
   window.saveDonation = async () => {
-    const donorName = document.getElementById("f-donor").value.trim();
-    const donorId   = document.getElementById("f-donor").dataset.id || "";
-    const department= document.getElementById("f-dep").value;
-    const team      = document.getElementById("f-team").value;
-    const mode      = document.getElementById("f-mode").value;
-    const amount    = parseFloat(document.getElementById("f-amount").value) || 0;
-    const date      = document.getElementById("f-date").value;
-    const fy        = document.getElementById("f-fy2").value;
-    const remarks   = document.getElementById("f-remarks").value.trim();
-    const editId    = document.getElementById("edit-id").value;
+    // Read from hidden fields — NOT from visible search input
+    const donorName = document.getElementById("selected-donor-name").value.trim()
+                   || document.getElementById("f-donor-search").value.trim();
+    const donorId   = document.getElementById("selected-donor-id").value.trim();
+    const department = document.getElementById("f-dep").value;
+    const team       = document.getElementById("f-team").value;
+    const mode       = document.getElementById("f-mode").value;
+    const amount     = parseFloat(document.getElementById("f-amount").value) || 0;
+    const date       = document.getElementById("f-date").value;
+    const fy         = document.getElementById("f-fy2").value;
+    const remarks    = document.getElementById("f-remarks").value.trim();
+    const editId     = document.getElementById("edit-id").value;
 
-    if (!donorName) return toast("Enter donor name","error");
-    if (!department || !team) return toast("Select department and team","error");
-    if (mode !== "Kind" && !amount) return toast("Enter donation amount","error");
-    if (!date) return toast("Select date","error");
+    // Validation
+    if (!donorName) return toast("Donor ka naam enter karo", "error");
+    if (!department || !team) return toast("Department aur Team select karo", "error");
+    if (mode !== "Kind" && !amount) return toast("Amount enter karo", "error");
+    if (!date) return toast("Date select karo", "error");
 
     const btn = document.getElementById("save-btn");
     btn.disabled = true; btn.textContent = "Saving...";
 
     const dt = new Date(date);
-    const payload = { donorName, donorId, department, team, mode,
-      amount: mode==="Kind"?0:amount, date, fy,
-      month: dt.getMonth()+1, year: dt.getFullYear(),
-      remarks, updatedAt: new Date().toISOString() };
+    const payload = {
+      donorName,           // ← guaranteed not undefined
+      donorId,
+      department,
+      team,
+      mode,
+      amount: mode === "Kind" ? 0 : amount,
+      date,
+      fy,
+      month: dt.getMonth() + 1,
+      year:  dt.getFullYear(),
+      remarks,
+      updatedAt: new Date().toISOString()
+    };
 
     try {
       if (editId) {
-        await updateDoc(doc(db,"donations",editId), payload);
+        await updateDoc(doc(db, "donations", editId), payload);
         toast("Donation updated! ✅");
       } else {
         payload.createdAt = new Date().toISOString();
-        await addDoc(collection(db,"donations"), payload);
-        toast("Donation saved! 🙏");
+        await addDoc(collection(db, "donations"), payload);
+        toast("Donation save ho gaya! 🙏");
       }
       closeModal();
-      // Reload
-      const snap = await getDocs(query(collection(db,"donations"), orderBy("date","desc")));
-      donations = snap.docs.map(d=>({id:d.id,...d.data()}));
+      const snap = await getDocs(query(collection(db, "donations"), orderBy("date", "desc")));
+      donations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       render();
-    } catch(e) { toast(e.message,"error"); }
-    btn.disabled=false; btn.textContent = editId ? "✅ Update" : "➕ Save";
+    } catch (e) {
+      toast("Error: " + e.message, "error");
+    }
+    btn.disabled = false;
+    btn.textContent = editId ? "✅ Update" : "➕ Save";
   };
 
+  // ── Edit donation ─────────────────────────────────────────────────
+  window.editDon = (id) => {
+    const d = donations.find(x => x.id === id);
+    if (!d) return;
+
+    document.getElementById("edit-id").value = id;
+    document.getElementById("selected-donor-id").value   = d.donorId || "";
+    document.getElementById("selected-donor-name").value = d.donorName || "";
+    document.getElementById("modal-title").textContent   = "✏️ Edit Donation";
+    document.getElementById("save-btn").textContent      = "✅ Update";
+    document.getElementById("f-donor-search").value = d.donorName || "";
+    document.getElementById("f-dep").innerHTML = buildDeptOptions(d.department || "");
+    document.getElementById("f-team").innerHTML = buildTeamOptions(d.department || "", d.team || "");
+    document.getElementById("f-mode").value     = d.mode || "Cash";
+    document.getElementById("f-amount").value   = d.amount || "";
+    document.getElementById("f-amount").disabled = d.mode === "Kind";
+    document.getElementById("f-date").value     = d.date || "";
+    document.getElementById("f-fy2").value       = d.fy || "2025-26";
+    document.getElementById("f-remarks").value  = d.remarks || "";
+    document.getElementById("modal").classList.add("show");
+  };
+
+  // ── Delete donation ───────────────────────────────────────────────
   window.delDon = async (id) => {
-    if (!confirm("Delete this donation?")) return;
-    await deleteDoc(doc(db,"donations",id));
-    toast("Deleted");
-    donations = donations.filter(d=>d.id!==id);
+    if (!confirm("Ye donation delete karna chahte ho?")) return;
+    await deleteDoc(doc(db, "donations", id));
+    toast("Deleted ✅");
+    donations = donations.filter(d => d.id !== id);
     render();
   };
 
   // Close autocomplete on outside click
   document.addEventListener("click", e => {
-    if (!e.target.closest("#f-donor") && !e.target.closest("#donor-ac"))
+    if (!e.target.closest("#f-donor-search") && !e.target.closest("#donor-ac"))
       document.getElementById("donor-ac").classList.add("hidden");
   });
 
